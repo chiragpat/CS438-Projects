@@ -2,5 +2,5 @@
 
 ## Team Members
 
-* ###[Chirag Patel](https://github.com/chiragpat)
-* ###[Kevin Strasberg](https://github.com/strasbe)
+* [Chirag Patel](https://github.com/chiragpat)
+* [Kevin Strasberg](https://github.com/strasbe)
