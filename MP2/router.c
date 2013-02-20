@@ -4,11 +4,16 @@ int main(int argc, char *argv[]){
   int sockfd, addr;
   char sendBuffer[MAXDATASIZE];
   char receiveBuffer[MAXDATASIZE];
-
+  node_list *nodeList = malloc(sizeof(node_list));
+  init_list(nodeList);
+  
+  
   if (argc != 4) {
     fprintf(stderr,"usage: router hostname tcpport udpport\n");
     exit(1);
   }
+
+
 
   sockfd = establishTCPConnection(argv[1], argv[2]);
 
@@ -20,6 +25,8 @@ int main(int argc, char *argv[]){
 
   //Clean up
   close(sockfd);
+  destroy_list(nodeList);
+  free(nodeList);
   return 0;
 }
 
@@ -90,7 +97,6 @@ void sendString(int sockfd, char * buffer){
  */
 void receiveAndPrint(int sockfd, char receiveBuffer[MAXDATASIZE], int print){
   int numbytes;
-  // char receiveBuffer[MAXDATASIZE];
 
   if ((numbytes = recv(sockfd, receiveBuffer, MAXDATASIZE-1, 0)) == -1) {
       perror("recv");

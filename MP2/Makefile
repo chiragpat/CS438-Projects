@@ -11,8 +11,11 @@ CC_ARGS=${CC_OPTS} ${CC_LIBS} ${CC_DEFINES} ${CC_INCLUDES}
 #target "all" depends on all others
 all: router
 
-router: router.c router.h
-	${CC} ${CC_ARGS} -o router router.c
+router: router.c router.h NodeList.h NodeList.c
+	${CC} ${CC_ARGS} -o router NodeList.c router.c
 
+# NodeList.o: NodeList.c NodeList.h
+# 	${CC} ${CC_ARGS} -o NodeList.o NodeList.c
+	
 clean:
 	rm -f router *.o
