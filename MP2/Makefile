@@ -14,8 +14,5 @@ all: router
 router: router.c router.h NodeList.h NodeList.c
 	${CC} ${CC_ARGS} -o router NodeList.c router.c
 
-# NodeList.o: NodeList.c NodeList.h
-# 	${CC} ${CC_ARGS} -o NodeList.o NodeList.c
-	
 clean:
 	rm -f router *.o

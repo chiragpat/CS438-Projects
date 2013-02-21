@@ -1,11 +1,12 @@
 #include "router.h"
 
 int main(int argc, char *argv[]){
-  int sockfd, addr;
-  char sendBuffer[MAXDATASIZE];
-  char receiveBuffer[MAXDATASIZE];
+  int sockfd, addr, udpport;
+  FILE* socket_file;
+  char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
   node_list *nodeList = malloc(sizeof(node_list));
   init_list(nodeList);
+  char * tok;
   
   
   if (argc != 4) {
@@ -13,15 +14,27 @@ int main(int argc, char *argv[]){
     exit(1);
   }
 
-
-
+  udpport = atoi(argv[3]);
   sockfd = establishTCPConnection(argv[1], argv[2]);
+  socket_file = fdopen(sockfd, "r");
 
-  strcpy(sendBuffer, "HELO\n");
-  sendString(sockfd, sendBuffer);
+  sendString(sockfd, "HELO\n");
   receiveAndPrint(sockfd, receiveBuffer, 0);
   addr = atoi(receiveBuffer+5);
   printf("manager replied with address %d\n", addr);
+
+  sprintf(sendBuffer, "HOST localhost %d\n", udpport);
+  sendString(sockfd, sendBuffer);
+  receiveAndPrint(sockfd, receiveBuffer, 1);
+
+  getAndSetupNeighbours(nodeList, sockfd, socket_file);
+  print_list(nodeList);
+  
+
+  sendString(sockfd, "READY\n");
+  while ( strcmp(receiveBuffer, "END\n") != 0 ) {
+    receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
+  }
 
   //Clean up
   close(sockfd);
@@ -76,6 +89,38 @@ int establishTCPConnection(char *host, char *port){
   return sockfd;
 }
 
+void getAndSetupNeighbours(node_list* nodeList, int sockfd, FILE* socket_file) {
+  int ret, i, node_number, node_port, cost;
+  char temp[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
+  char *tok;
+
+  sendString(sockfd, "NEIGH?\n");
+  while ( strcmp(receiveBuffer, "DONE\n") != 0 ) {
+    ret = receiveOneLineAndPrint(socket_file, receiveBuffer, 0);
+    if (ret == 1 && strcmp(receiveBuffer, "DONE\n") != 0) {
+      i = 0;
+      strcpy(temp, receiveBuffer);
+      tok = strtok(temp, " \n");
+      while (tok != NULL) {
+        if (i == 1) {
+          node_number = atoi(tok);
+        }
+
+        if (i == 3) {
+          node_port = atoi(tok);
+        }
+
+        if (i == 4) {
+          cost = atoi(tok);  
+        }
+        tok = strtok(NULL, " \n");
+        i++; 
+      }
+      append_list(nodeList, node_number, node_port, cost);
+    }
+  }
+}
+
 /**
  * Sends a message to through the passed in socket with the passed in buffer as the message
  * @param sockfd Socket
@@ -105,6 +150,25 @@ void receiveAndPrint(int sockfd, char receiveBuffer[MAXDATASIZE], int print){
 
   receiveBuffer[numbytes] = '\0';
   if (print != 0) {
-    printf("Received: %s\n",receiveBuffer);
+    printf("Received: %s",receiveBuffer);
+  }
+}
+
+/**
+ * Receives one line on the passed in socket and prints the data if the print parameter is not 0
+ * @param  sockfd Socket
+ * @param  receiveBuffer the array to hold the return string
+ * @param  print 
+ * @return -1 on failure and 1 on success
+ */
+int receiveOneLineAndPrint(FILE* socket_file, char receiveBuffer[MAXDATASIZE], int print){
+  if (fgets(receiveBuffer, MAXDATASIZE-1, socket_file) != NULL) {
+      if (print != 0) {
+        printf("Received: %s",receiveBuffer);
+      }
+      return 1;
+  }
+  else {
+    return -1;
   }
 }

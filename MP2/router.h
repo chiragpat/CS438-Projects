@@ -16,7 +16,9 @@
 #define MAXDATASIZE 1024
 
 int establishTCPConnection(char *host, char *port);
+void getAndSetupNeighbours(node_list* nodeList, int sockfd, FILE* socket_file);
 void sendString(int sockfd, char * buffer);
 void receiveAndPrint(int sockfd, char receiveBuffer[MAXDATASIZE], int print);
+int receiveOneLineAndPrint(FILE* socket_file, char receiveBuffer[MAXDATASIZE], int print);
 
 #endif

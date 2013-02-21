@@ -10,6 +10,7 @@
 typedef struct  {
   int node_number;
   int node_port;
+  int cost;
   struct node *next;
 } node;
 
@@ -20,7 +21,7 @@ typedef struct {
 } node_list;
 
 void init_list(node_list* list);
-void append_list(node_list* list, int node_number, int node_port);
+void append_list(node_list* list, int node_number, int node_port, int cost);
 void print_list(node_list* list);
 void destroy_list(node_list* list);
 
