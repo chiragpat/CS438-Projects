@@ -1,7 +1,7 @@
 #include "router.h"
 
 int main(int argc, char *argv[]){
-  int sockfd, addr, udpport;
+  int sockfd, addr, udpport, new_cost;
   FILE* socket_file;
   char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
   node_list *nodeList = malloc(sizeof(node_list));
@@ -34,8 +34,15 @@ int main(int argc, char *argv[]){
   sendString(sockfd, "READY\n");
   while ( strcmp(receiveBuffer, "END\n") != 0 ) {
     receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
+    if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
+      new_cost = updateNodeList(receiveBuffer, addr, nodeList);
+      print_list(nodeList);
+      sprintf(sendBuffer, "COST %d OK\n", new_cost);
+      sendString(sockfd, sendBuffer);
+    }
   }
 
+  sendString(sockfd, "BYE\n");
   //Clean up
   close(sockfd);
   destroy_list(nodeList);
@@ -119,6 +126,41 @@ void getAndSetupNeighbours(node_list* nodeList, int sockfd, FILE* socket_file) {
       append_list(nodeList, node_number, node_port, cost);
     }
   }
+}
+
+int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, node_list *nodeList){
+  int i, first_node_number, second_node_number, node_number, new_cost;
+  char temp[MAXDATASIZE];
+  char *tok;
+
+  i = 0;
+  strcpy(temp, receiveBuffer);
+  tok = strtok(temp, " \n");
+  while(tok != NULL) {
+    if (i == 1) {
+      first_node_number = atoi(tok);
+    }
+
+    if (i == 2) {
+      second_node_number = atoi(tok);
+    }
+
+    if (i == 3) {
+      new_cost = atoi(tok);
+    }
+    tok = strtok(NULL, " \n");
+    i++;
+  }
+
+  if (first_node_number == addr) {
+    node_number = second_node_number;
+  }
+  else {
+    node_number = first_node_number;
+  }
+
+  edit_cost(nodeList, node_number, new_cost);
+  return new_cost;
 }
 
 /**
