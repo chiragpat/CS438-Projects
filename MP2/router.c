@@ -1,13 +1,15 @@
 #include "router.h"
 
 int main(int argc, char *argv[]){
-  int sockfd, addr, udpport, new_cost;
+  int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd;
+  int src, dest;
+  char *msg;
   FILE* socket_file;
   char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
   node_list *nodeList = malloc(sizeof(node_list));
+  fd_set fds;
+
   init_list(nodeList);
-  char * tok;
-  
   
   if (argc != 4) {
     fprintf(stderr,"usage: router hostname tcpport udpport\n");
@@ -16,6 +18,7 @@ int main(int argc, char *argv[]){
 
   udpport = atoi(argv[3]);
   sockfd = establishTCPConnection(argv[1], argv[2]);
+  udpfd = openUDPListenerSocket(argv[3]);
   socket_file = fdopen(sockfd, "r");
 
   sendString(sockfd, "HELO\n");
@@ -25,75 +28,67 @@ int main(int argc, char *argv[]){
 
   sprintf(sendBuffer, "HOST localhost %d\n", udpport);
   sendString(sockfd, sendBuffer);
-  receiveAndPrint(sockfd, receiveBuffer, 1);
+  receiveAndPrint(sockfd, receiveBuffer, 0);
 
   getAndSetupNeighbours(nodeList, sockfd, socket_file);
   print_list(nodeList);
   
 
   sendString(sockfd, "READY\n");
-  while ( strcmp(receiveBuffer, "END\n") != 0 ) {
-    receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
-    if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
-      new_cost = updateNodeList(receiveBuffer, addr, nodeList);
-      print_list(nodeList);
-      sprintf(sendBuffer, "COST %d OK\n", new_cost);
-      sendString(sockfd, sendBuffer);
-    }
+
+  FD_ZERO(&fds);
+  FD_SET(sockfd, &fds);
+  FD_SET(udpfd, &fds);
+
+  maxfd = sockfd;
+  if ( maxfd < udpfd ) {
+    maxfd = udpfd;
   }
 
-  sendString(sockfd, "BYE\n");
+  while( (rv=select(maxfd+1, &fds, NULL, NULL, NULL)) >=0 ){
+
+    if (FD_ISSET(sockfd, &fds)) {
+      receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
+
+      if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
+        new_cost = updateNodeList(receiveBuffer, addr, nodeList);
+        sprintf(sendBuffer, "COST %d OK\n", new_cost);
+        sendString(sockfd, sendBuffer);
+      }
+
+      if (strcmp(receiveBuffer, "END\n") == 0) {
+        sendString(sockfd, "BYE\n");
+        break;
+      }
+    }
+
+    if (FD_ISSET(udpfd, &fds)) {
+      receiveUDPMessageAndPrint(udpfd, receiveBuffer, 0);
+
+      if ((int)receiveBuffer[0] == 1) {
+        src = (int)receiveBuffer[1];
+        dest = (int)receiveBuffer[2];
+        msg = receiveBuffer + 3;
+        printf("Source: %d, Destination: %d, Message: %s\n", src, dest, msg);
+      }
+      
+    }
+
+    FD_ZERO(&fds);
+    FD_SET(sockfd,&fds);
+    FD_SET(udpfd,&fds);
+  }
+  
+  if (rv == -1) {
+    perror("select()");   
+    exit(1);
+  }
+
   //Clean up
   close(sockfd);
   destroy_list(nodeList);
   free(nodeList);
   return 0;
-}
-
-/**
- * Establish a tcp conenction to the passed in host and port
- * @param  host Host String
- * @param  port Port String
- * @return socket file descriptor 
- */
-int establishTCPConnection(char *host, char *port){
-  char s[INET6_ADDRSTRLEN];
-  struct addrinfo hints, *servinfo, *p;
-  int sockfd, rv;
-
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-
-  if ((rv = getaddrinfo(host, port, &hints, &servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
-  }
-
-  // loop through all the results and connect to the first we can
-  for(p = servinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket(p->ai_family, p->ai_socktype,
-        p->ai_protocol)) == -1) {
-      perror("client: socket");
-      continue;
-    }
-
-    if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-      close(sockfd);
-      perror("client: connect");
-      continue;
-    }
-
-    break;
-  }
-
-  if (p == NULL) {
-    fprintf(stderr, "client: failed to connect\n");
-    exit(2);
-  }
-
-  freeaddrinfo(servinfo); // all done with this structure
-  return sockfd;
 }
 
 void getAndSetupNeighbours(node_list* nodeList, int sockfd, FILE* socket_file) {
@@ -161,56 +156,4 @@ int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, node_list *nodeLis
 
   edit_cost(nodeList, node_number, new_cost);
   return new_cost;
-}
-
-/**
- * Sends a message to through the passed in socket with the passed in buffer as the message
- * @param sockfd Socket
- * @param buffer string to send
- */
-void sendString(int sockfd, char * buffer){
-  int numbytes = send(sockfd, buffer, strlen(buffer), 0);
-  if (numbytes == -1) {
-    perror("send");
-    exit(1);
-  }
-}
-
-/**
- * Receives on the passed in socket and prints the data if the print parameter is not 0
- * @param  sockfd Socket
- * @param  receiveBuffer the array to hold the return string
- * @param  print 
- */
-void receiveAndPrint(int sockfd, char receiveBuffer[MAXDATASIZE], int print){
-  int numbytes;
-
-  if ((numbytes = recv(sockfd, receiveBuffer, MAXDATASIZE-1, 0)) == -1) {
-      perror("recv");
-      exit(1);
-  }
-
-  receiveBuffer[numbytes] = '\0';
-  if (print != 0) {
-    printf("Received: %s",receiveBuffer);
-  }
-}
-
-/**
- * Receives one line on the passed in socket and prints the data if the print parameter is not 0
- * @param  sockfd Socket
- * @param  receiveBuffer the array to hold the return string
- * @param  print 
- * @return -1 on failure and 1 on success
- */
-int receiveOneLineAndPrint(FILE* socket_file, char receiveBuffer[MAXDATASIZE], int print){
-  if (fgets(receiveBuffer, MAXDATASIZE-1, socket_file) != NULL) {
-      if (print != 0) {
-        printf("Received: %s",receiveBuffer);
-      }
-      return 1;
-  }
-  else {
-    return -1;
-  }
 }

@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <string.h>
 
+#define MAXDATASIZE 1024
+
 typedef struct  {
   int node_number;
   int node_port;
