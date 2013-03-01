@@ -25,6 +25,7 @@ typedef struct {
 void init_list(node_list* list);
 void append_list(node_list* list, int node_number, int node_port, int cost);
 void edit_cost(node_list* list, int node_number, int new_cost);
+node* get_by_node_number_list(node_list* list, int node_number);
 void print_list(node_list* list);
 void destroy_list(node_list* list);
 

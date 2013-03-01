@@ -18,5 +18,6 @@
 
 void getAndSetupNeighbours(node_list* nodeList, int sockfd, FILE* socket_file);
 int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, node_list *nodeList);
+int byteToInt(char* p);
 
 #endif

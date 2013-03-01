@@ -25,17 +25,25 @@ void append_list(node_list* list, int node_number, int node_port, int cost) {
 }
 
 void edit_cost(node_list* list, int node_number, int new_cost) {
+  node *current_node = get_by_node_number_list(list, node_number);
+
+  if (current_node != NULL) {
+    current_node->cost = new_cost;
+  }
+}
+
+node* get_by_node_number_list(node_list* list, int node_number) {
   node *current_node = list->head;
 
   while (current_node != NULL) {
     if (current_node->node_number == node_number) {
-      current_node->cost = new_cost;
-      return;
+      return current_node;
     }
     current_node = (node *) current_node->next;
   }
-}
 
+  return NULL;
+}
 void print_list(node_list* list) {
   node *current_node = list->head;
 

@@ -101,7 +101,7 @@ int openUDPListenerSocket(char *port){
  * @param  msg Message String
  * @return 0 on success
  */
-int sendUDPMessageTo(char *host, char *port, char *msg){
+int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
   struct addrinfo hints, *servinfo, *p;
   int sockfd, rv;
 
@@ -130,7 +130,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg){
     return 2;
   }
 
-  sendStringUDP(sockfd, p, msg);
+  sendStringUDP(sockfd, p, msg, bytes);
 
   //Clean Up
   freeaddrinfo(servinfo);
@@ -158,8 +158,8 @@ void sendString(int sockfd, char * buffer){
  * @param dest Destination addressInfo
  * @param buffer string to send
  */
-void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer){
-  int numbytes = sendto(sockfd, buffer, strlen(buffer), 0, dest->ai_addr, dest->ai_addrlen);
+void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes){
+  int numbytes = sendto(sockfd, buffer, bytes, 0, dest->ai_addr, dest->ai_addrlen);
   if (numbytes == -1) {
     perror("talker: sendto");
     exit(1);

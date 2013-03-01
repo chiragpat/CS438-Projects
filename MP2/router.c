@@ -3,9 +3,9 @@
 int main(int argc, char *argv[]){
   int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd;
   int src, dest;
-  char *msg;
+  char *msg, *host;
   FILE* socket_file;
-  char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
+  char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE];
   node_list *nodeList = malloc(sizeof(node_list));
   fd_set fds;
 
@@ -17,6 +17,7 @@ int main(int argc, char *argv[]){
   }
 
   udpport = atoi(argv[3]);
+  host = argv[1];
   sockfd = establishTCPConnection(argv[1], argv[2]);
   udpfd = openUDPListenerSocket(argv[3]);
   socket_file = fdopen(sockfd, "r");
@@ -54,6 +55,7 @@ int main(int argc, char *argv[]){
         new_cost = updateNodeList(receiveBuffer, addr, nodeList);
         sprintf(sendBuffer, "COST %d OK\n", new_cost);
         sendString(sockfd, sendBuffer);
+        // print_list(nodeList);
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -65,13 +67,32 @@ int main(int argc, char *argv[]){
     if (FD_ISSET(udpfd, &fds)) {
       receiveUDPMessageAndPrint(udpfd, receiveBuffer, 0);
 
-      if ((int)receiveBuffer[0] == 1) {
-        src = (int)receiveBuffer[1];
-        dest = (int)receiveBuffer[2];
+      int controlInt = (int)receiveBuffer[0];
+      if (controlInt == 1) {
+        dest = byteToInt(receiveBuffer+1);
         msg = receiveBuffer + 3;
-        printf("Source: %d, Destination: %d, Message: %s\n", src, dest, msg);
+        printf("Destination: %d, Message: %s\n", dest, msg);
+
+        node *destinationNode = get_by_node_number_list(nodeList, dest);
+        if (destinationNode != NULL) {
+          sprintf(destPort, "%d", destinationNode->node_port);
+          memcpy(sendBuffer, receiveBuffer, (size_t) strlen(msg)+3);
+          sendBuffer[0] = (char) 2;
+          strcat(sendBuffer, "\n");
+          sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, strlen(msg)+3);
+        }
       }
-      
+      else if (controlInt == 2) {
+        msg = receiveBuffer + 3;
+
+        printf("Message: %s\n", msg);
+        sprintf(sendBuffer, "RECEIVED %s\n", msg);
+        sendString(sockfd, sendBuffer);
+      }
+      else {
+        printf("Message without controlInt: %s\n", receiveBuffer); 
+      }
+
     }
 
     FD_ZERO(&fds);
@@ -156,4 +177,12 @@ int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, node_list *nodeLis
 
   edit_cost(nodeList, node_number, new_cost);
   return new_cost;
+}
+
+int byteToInt(char* p) {
+  int result = 0;  // initialize;
+  char* rv = (char*)&result;
+  rv[0] = p[1];
+  rv[1] = p[0];
+  return result;
 }

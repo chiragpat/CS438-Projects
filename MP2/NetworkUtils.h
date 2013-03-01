@@ -16,9 +16,9 @@
 
 int establishTCPConnection(char *host, char *port);
 int openUDPListenerSocket(char *port);
-int sendUDPMessageTo(char *host, char *port, char *msg);
+int sendUDPMessageTo(char *host, char *port, char *msg, int bytes);
 void sendString(int sockfd, char * buffer);
-void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer);
+void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes);
 void receiveAndPrint(int sockfd, char receiveBuffer[MAXDATASIZE], int print);
 int receiveOneLineAndPrint(FILE* socket_file, char receiveBuffer[MAXDATASIZE], int print);
 void receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAXDATASIZE], int print);
