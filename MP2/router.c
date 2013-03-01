@@ -5,7 +5,7 @@ int main(int argc, char *argv[]){
   int src, dest;
   char *msg, *host;
   FILE* socket_file;
-  char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE];
+  char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE], receiveBuffer2[MAXDATASIZE];;
   node_list *nodeList = malloc(sizeof(node_list));
   fd_set fds;
 
@@ -34,8 +34,10 @@ int main(int argc, char *argv[]){
   getAndSetupNeighbours(nodeList, sockfd, socket_file);
   print_list(nodeList);
   
-
   sendString(sockfd, "READY\n");
+
+  sendString(sockfd, "LOG ON\n");
+  receiveAndPrint(sockfd, receiveBuffer, 1);
 
   FD_ZERO(&fds);
   FD_SET(sockfd, &fds);
@@ -71,10 +73,15 @@ int main(int argc, char *argv[]){
       if (controlInt == 1) {
         dest = byteToInt(receiveBuffer+1);
         msg = receiveBuffer + 3;
+
         printf("Destination: %d, Message: %s\n", dest, msg);
 
+        sprintf(sendBuffer, "LOG FWD %d %s\n", dest, msg);
+        sendString(sockfd, sendBuffer);
+        receiveAndPrint(sockfd, receiveBuffer2, 1);
+
         node *destinationNode = get_by_node_number_list(nodeList, dest);
-        if (destinationNode != NULL) {
+        if (destinationNode != NULL && destinationNode->cost != -1) {
           sprintf(destPort, "%d", destinationNode->node_port);
           memcpy(sendBuffer, receiveBuffer, (size_t) strlen(msg)+3);
           sendBuffer[0] = (char) 2;

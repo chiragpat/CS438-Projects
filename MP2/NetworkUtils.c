@@ -146,6 +146,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
  */
 void sendString(int sockfd, char * buffer){
   int numbytes = send(sockfd, buffer, strlen(buffer), 0);
+  printf("Sent: %s", buffer);
   if (numbytes == -1) {
     perror("send");
     exit(1);

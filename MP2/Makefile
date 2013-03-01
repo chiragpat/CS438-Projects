@@ -15,4 +15,4 @@ router: router.c router.h NodeList.h NodeList.c NetworkUtils.h NetworkUtils.c
 	${CC} ${CC_ARGS} -o router NodeList.c NetworkUtils.c router.c
 
 clean:
-	rm -f router *.o
+	rm -f router *.o log/*
