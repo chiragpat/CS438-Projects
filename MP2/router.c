@@ -39,46 +39,46 @@ int main(int argc, char *argv[]){
   getAndSetupNeighbours(nodegraph, sockfd, socket_file);
   broadcastLinkInfo(nodegraph, udpfd);
 
-  FD_ZERO(&fds);
-  FD_SET(udpfd, &fds);
+  // FD_ZERO(&fds);
+  // FD_SET(udpfd, &fds);
 
-  tv.tv_sec = 1;
-  tv.tv_usec = 500000;
+  // tv.tv_sec = 1;
+  // tv.tv_usec = 500000;
 
-  while( (rv=select(udpfd+1, &fds, NULL, NULL, &tv)) > 0 ) {
-    if (FD_ISSET(udpfd, &fds)) {
-      receiveUDPMessageAndPrint(udpfd, receiveBuffer, 0);
-      LinkMessage message;
-      memcpy(&message, receiveBuffer, sizeof(LinkMessage));
-      printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
+  // while( (rv=select(udpfd+1, &fds, NULL, NULL, &tv)) > 0 ) {
+  //   if (FD_ISSET(udpfd, &fds)) {
+  //     receiveUDPMessageAndPrint(udpfd, receiveBuffer, 0);
+  //     LinkMessage message;
+  //     memcpy(&message, receiveBuffer, sizeof(LinkMessage));
+  //     printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
-      Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
+  //     Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
 
-      if (link == NULL) {
-        Node *node0 = get_node(nodegraph, message.node0_number);
-        Node *node1 = get_node(nodegraph, message.node1_number);
+  //     if (link == NULL) {
+  //       Node *node0 = get_node(nodegraph, message.node0_number);
+  //       Node *node1 = get_node(nodegraph, message.node1_number);
 
-        if (node0 == NULL) {
-          add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost);
-        }
-        else if (node1 == NULL) {
-          add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
-        }
-        else if (node0 == NULL && node1 == NULL) {
-          add_node(nodegraph, message.node0_number, message.node0_port);
-          add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
-        }
-        else {
-          add_link(nodegraph, message.node0_number, message.node1_number, message.cost);
-        }
+  //       if (node0 == NULL) {
+  //         add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost);
+  //       }
+  //       else if (node1 == NULL) {
+  //         add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+  //       }
+  //       else if (node0 == NULL && node1 == NULL) {
+  //         add_node(nodegraph, message.node0_number, message.node0_port);
+  //         add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+  //       }
+  //       else {
+  //         add_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+  //       }
 
-        broadcastOneLinkInfo(nodegraph, message, udpfd);
-      }
-    }
+  //       broadcastOneLinkInfo(nodegraph, message, udpfd);
+  //     }
+  //   }
 
-    FD_ZERO(&fds);
-    FD_SET(udpfd,&fds);
-  }
+  //   FD_ZERO(&fds);
+  //   FD_SET(udpfd,&fds);
+  // }
 
   print_graph(nodegraph);
   
@@ -102,8 +102,9 @@ int main(int argc, char *argv[]){
       receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
 
       if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
-        new_cost = updateNodeList(receiveBuffer, addr, nodegraph);
-        sprintf(sendBuffer, "COST %d OK\n", new_cost);
+        LinkMessage message = updateNodeList(receiveBuffer, addr, nodegraph);
+        broadcastOneLinkInfo(nodegraph, message, udpfd);
+        sprintf(sendBuffer, "COST %d OK\n", message.cost);
         sendString(sockfd, sendBuffer);
         print_graph(nodegraph);
       }
@@ -147,7 +148,39 @@ int main(int argc, char *argv[]){
         sendString(sockfd, sendBuffer);
       }
       else {
-        printf("Message without controlInt: %s\n", receiveBuffer); 
+        LinkMessage message;
+        memcpy(&message, receiveBuffer, sizeof(LinkMessage));
+        printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
+
+        Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
+
+        if (link == NULL || link->cost != message.cost) {
+          Node *node0 = get_node(nodegraph, message.node0_number);
+          Node *node1 = get_node(nodegraph, message.node1_number);
+
+          if (node0 == NULL) {
+            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost);
+          }
+          else if (node1 == NULL) {
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+          }
+          else if (node0 == NULL && node1 == NULL) {
+            add_node(nodegraph, message.node0_number, message.node0_port);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+          }
+          else {
+            if (link) {
+              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+            }
+            else {
+              add_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+            }
+            
+          }
+
+          broadcastOneLinkInfo(nodegraph, message, udpfd);
+          print_graph(nodegraph);
+        }
       }
 
     }
@@ -203,10 +236,11 @@ void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) 
   }
 }
 
-int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph){
+LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph){
   int i, first_node_number, second_node_number, node_number, new_cost;
   char temp[MAXDATASIZE];
   char *tok;
+  LinkMessage message;
 
   i = 0;
   strcpy(temp, receiveBuffer);
@@ -228,7 +262,12 @@ int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegra
   }
 
   edit_link(nodegraph, first_node_number, second_node_number, new_cost);
-  return new_cost;
+  message.controlInt = 3;
+  message.node0_number = first_node_number;
+  message.node1_number = second_node_number;
+  message.cost = new_cost;
+
+  return message;
 }
 
 void broadcastLinkInfo(NodeGraph* graph, int udpfd) {

@@ -27,7 +27,7 @@ typedef struct {
 } LinkMessage;
 
 void getAndSetupNeighbours(NodeGraph *nodegraph, int sockfd, FILE* socket_file);
-int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph);
+LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph);
 void broadcastLinkInfo(NodeGraph* graph, int udpfd);
 void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd);
 int byteToInt(char* p);

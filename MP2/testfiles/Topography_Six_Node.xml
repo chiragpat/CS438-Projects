@@ -32,4 +32,31 @@
       <cost>11</cost>
     </Link>
   </Topology>
+  <Events>
+      <Link>
+        <node>4</node>
+        <node>5</node>
+        <cost>-1</cost>
+      </Link>
+      <Message>
+        <src>1</src>
+        <dst>2</dst>
+        <data>asdf</data>
+      </Message>
+      <Link>
+        <node>5</node>
+        <node>6</node>
+        <cost>-1</cost>
+      </Link>
+      <Message>
+        <src>1</src>
+        <dst>3</dst>
+        <data>zcxxzcxzcxz</data>
+      </Message>
+      <Message>
+        <src>1</src>
+        <dst>4</dst>
+        <data>aqwewasdsaf</data>
+      </Message>
+    </Events>
 </Simulation>
