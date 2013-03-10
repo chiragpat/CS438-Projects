@@ -174,6 +174,7 @@ void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) 
   char temp[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
   char *tok;
 
+  strcpy(receiveBuffer, "");
   sendString(sockfd, "NEIGH?\n");
   while ( strcmp(receiveBuffer, "DONE\n") != 0 ) {
     ret = receiveOneLineAndPrint(socket_file, receiveBuffer, 0);
