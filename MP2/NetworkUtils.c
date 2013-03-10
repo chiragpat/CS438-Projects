@@ -130,6 +130,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
     return 2;
   }
 
+  printf("Sending to %s\n", port);
   sendStringUDP(sockfd, p, msg, bytes);
 
   //Clean Up

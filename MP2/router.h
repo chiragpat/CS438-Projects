@@ -8,16 +8,28 @@
 #include <string.h>
 #include <netdb.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include "NetworkUtils.h"
-#include "NodeList.h"
+#include "NodeGraph.h"
 
 #define MAXDATASIZE 1024
 
-void getAndSetupNeighbours(node_list* nodeList, int sockfd, FILE* socket_file);
-int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, node_list *nodeList);
+typedef struct {
+  int controlInt;
+  int node0_number;
+  int node1_number;
+  int node0_port;
+  int node1_port;
+  int cost;
+} LinkMessage;
+
+void getAndSetupNeighbours(NodeGraph *nodegraph, int sockfd, FILE* socket_file);
+int updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph);
+void broadcastLinkInfo(NodeGraph* graph, int udpfd);
+void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd);
 int byteToInt(char* p);
 
 #endif
