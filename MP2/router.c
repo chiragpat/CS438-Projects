@@ -42,8 +42,8 @@ int main(int argc, char *argv[]){
   FD_ZERO(&fds);
   FD_SET(udpfd, &fds);
 
-  tv.tv_sec = 0;
-  tv.tv_usec = 100000;
+  tv.tv_sec = 1;
+  tv.tv_usec = 500000;
 
   while( (rv=select(udpfd+1, &fds, NULL, NULL, &tv)) > 0 ) {
     if (FD_ISSET(udpfd, &fds)) {
