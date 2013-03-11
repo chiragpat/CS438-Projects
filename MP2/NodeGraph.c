@@ -151,6 +151,7 @@ void print_graph(NodeGraph* graph) {
     }
   }
 
+  printf("-------\n");
 }
 
 Node* get_hop(NodeGraph* graph, int destination_number) {
