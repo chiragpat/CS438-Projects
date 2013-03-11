@@ -15,6 +15,9 @@ typedef struct {
   int node_port;
   int num_neighbours;
   int neighbours_size;
+  int distance;
+  struct Node *previous;
+  struct Node *hop;
   struct Node **neighbours;
   struct Link **neighbour_links;
 } Node;
@@ -26,6 +29,12 @@ typedef struct {
 } Link;
 
 typedef struct {
+  Node* destination_node;
+  Node* next_hop;
+  int cost;
+} Hop;
+
+typedef struct {
   Node *my_node;
 
   Node *nodes;
@@ -35,6 +44,8 @@ typedef struct {
   Link *links;
   int num_links;
   int links_size;
+
+  Hop *routes;
 } NodeGraph;
 
 void init_graph(NodeGraph* graph, int my_node_number, int node_port);

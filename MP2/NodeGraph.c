@@ -7,6 +7,7 @@ void init_graph(NodeGraph* graph, int my_node_number, int node_port) {
   graph->nodes = malloc(DEFAULTARRAYSIZE * sizeof(Node));
   graph->num_links = 0;
   graph->links = malloc(DEFAULTARRAYSIZE * sizeof(Link));
+  graph->routes = NULL;
 
   add_node(graph, my_node_number, node_port);
   graph->my_node = &graph->nodes[0];
@@ -21,6 +22,9 @@ void add_node(NodeGraph* graph, int node_number, int node_port) {
   int num_nodes = graph->num_nodes;
   graph->nodes[num_nodes].node_number = node_number;
   graph->nodes[num_nodes].node_port = node_port;
+  graph->nodes[num_nodes].distance = -10000;
+  graph->nodes[num_nodes].previous = NULL;
+  graph->nodes[num_nodes].hop = NULL;
   graph->nodes[num_nodes].num_neighbours = 0;
   graph->nodes[num_nodes].neighbours_size = DEFAULTARRAYSIZE;
   graph->nodes[num_nodes].neighbours = malloc(DEFAULTARRAYSIZE * sizeof(Node*));
@@ -114,7 +118,15 @@ void print_graph(NodeGraph* graph) {
   printf("-------\nNodes\n");
   for (i = 0; i < graph->num_nodes; i++) {
     node = graph->nodes[i];
-    printf("   Node: %d addr %d port\n", node.node_number, node.node_port);
+    int pre = -1;
+    int hop = -1;
+    if (node.previous != NULL) {
+      Node *n = (Node *) node.previous;
+      pre = n->node_number;
+      n = (Node *) node.hop;
+      hop = n->node_number;
+    }
+    printf("   Node: %d addr %d port %d previous %d hop\n", node.node_number, node.node_port, pre, hop);
 
     for (j = 0; j < node.num_neighbours; j++) {
       Node *neighbour = (Node *) node.neighbours[j];
@@ -123,6 +135,21 @@ void print_graph(NodeGraph* graph) {
       printf("\t %d --> %d\n", neighbour->node_number, neighbour_link->cost);
     }
   }
+
+  printf("-------\nRoutes\n");
+
+  if (graph->routes != NULL) {
+    for (i = 0; i < graph->num_nodes; i++) {
+      Node *destination = graph->routes[i].destination_node;
+      Node *hop = graph->routes[i].next_hop;
+      int hop_num = -1;
+      if ( hop != NULL ){
+        hop_num = hop->node_number;
+      }
+      printf("   Destination: %d via %d\n", destination->node_number, hop_num);
+    }
+  }
+
 }
 
 void destroy_graph(NodeGraph* graph) {
@@ -136,4 +163,5 @@ void destroy_graph(NodeGraph* graph) {
 
   free(graph->nodes);
   free(graph->links);
+  free(graph->routes);
 }
