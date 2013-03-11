@@ -1,39 +1,14 @@
 #include "Djikstras.h"
-#include "heap.h"
-
-int compare(struct heap_node* a, struct heap_node* b) {
-  Node *node1 = (Node *) a->value;
-  Node *node2 = (Node *) b->value;
-
-  if (node1->distance < node2->distance) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
-
-}
-
-struct heap_node * get_heap_node(struct heap_node *nodes, Node *node_to_find, int num_nodes) {
-  int i;
-  for ( i = 0; i < num_nodes; i++ ) {
-    if (nodes[i].value == node_to_find) {
-      return &nodes[i];
-    }
-  }
-  return NULL;  
-}
 
 void build_hop_table(NodeGraph* graph) {
   int num_routes, i, temp, j;
   Node *visited_nodes = malloc(graph->num_nodes*sizeof(Node));
-  struct heap *unvisited_nodes = malloc(sizeof(struct heap));
-  struct heap_node unvisited_heap_nodes[graph->num_nodes];
+  Node **unvisited_nodes = malloc(graph->num_nodes*sizeof(Node*));
+  int num_unvisited_nodes = 0;
   free(graph->routes);
   graph->routes = malloc(graph->num_nodes * sizeof(Hop));
-
   num_routes = 0;
-  heap_init(unvisited_nodes);
+
   for (i = 0; i < graph->num_nodes; i++) {
     if (&graph->nodes[i] == graph->my_node) {
       graph->nodes[i].distance = 0;
@@ -45,36 +20,34 @@ void build_hop_table(NodeGraph* graph) {
       graph->nodes[i].previous = NULL;
       graph->nodes[i].hop = NULL;
     }
-    heap_node_init(&unvisited_heap_nodes[i], &graph->nodes[i]);
-    heap_insert(compare, unvisited_nodes, &unvisited_heap_nodes[i]);
+    unvisited_nodes[num_unvisited_nodes] = &graph->nodes[i];
+    num_unvisited_nodes++;
   }
 
-  while (!heap_empty(unvisited_nodes)) {
-    Node *node;
+  while (num_unvisited_nodes != 0) {  
+    Node *node = get_and_remove_min(unvisited_nodes, num_unvisited_nodes);
+    num_unvisited_nodes--;
 
-    struct heap_node* h_node = heap_take(compare, unvisited_nodes);
-    node = h_node->value;
     visited_nodes[num_routes] = *node;
-    
     graph->routes[num_routes].destination_node = node;
     graph->routes[num_routes].next_hop = (Node *) node->hop;
     graph->routes[num_routes].cost = node->distance;
     num_routes++;
 
+    printf("Off the heap %d:%d\n", node->node_number, node->distance);
     if (node->distance == INT_MAX) {
       break;
     }
 
     for (j = 0; j < node->num_neighbours; j++) {
-      Node *temp_node;
       Node *neigh_node = (Node *) node->neighbours[j];
       Link *link = (Link *) node->neighbour_links[j];
-      printf("%d:%d\n", node->node_number, neigh_node->node_number);
-      struct heap_node* neigh_h_node = get_heap_node(unvisited_heap_nodes, neigh_node, graph->num_nodes);
-      if ( (link->cost != -1) && (heap_node_in_heap(neigh_h_node))) {
-        
+      
+      if ( (link->cost != -1) && (contains(visited_nodes, num_routes, neigh_node) == -1) ) {
+        printf("%d:%d\n", node->node_number, neigh_node->node_number);
         int altdist = node->distance + link->cost;
         if (altdist < neigh_node->distance) {
+          printf("%d:%d\n", node->node_number, neigh_node->node_number);
           if (node->hop == NULL) {
             neigh_node->hop = (struct Node*) neigh_node;
           }
@@ -83,7 +56,6 @@ void build_hop_table(NodeGraph* graph) {
           }
           neigh_node->distance = altdist;
           neigh_node->previous = (struct Node*) node;
-          heap_decrease(compare, unvisited_nodes, neigh_h_node);
         }
       }
 
@@ -91,10 +63,11 @@ void build_hop_table(NodeGraph* graph) {
 
   }
 
-  while (!heap_empty(unvisited_nodes)) {
-    Node *node;
-    struct heap_node* h_node = heap_take(compare, unvisited_nodes);
-    node = h_node->value;
+  while (num_unvisited_nodes != 0) {
+    Node *node = get_and_remove_min(unvisited_nodes, num_unvisited_nodes);
+    num_unvisited_nodes--;
+
+    printf("%d:%d\n", node->node_number, node->distance);
     graph->routes[num_routes].destination_node = node;
     graph->routes[num_routes].next_hop = (Node *) node->hop;
     graph->routes[num_routes].cost = node->distance;
@@ -114,4 +87,27 @@ int contains(Node *visited_nodes, int num_nodes, Node *node) {
     }
   }
   return -1;
+}
+
+Node* get_and_remove_min(Node **nodes, int num_nodes) {
+  Node* min = NULL;
+  int i, min_index = 0;
+
+  for( i = 0; i < num_nodes; i++) {
+    if (!min) {
+      min = nodes[i];
+      min_index = i;
+    }
+    else {
+      if(nodes[i]->distance < min->distance) {
+        min = nodes[i];
+        min_index = i;
+      }
+    }
+  }
+
+  for( i = min_index; i < num_nodes - 1; i++ ) {
+    nodes[i] = nodes[i+1];
+  }
+  return min;
 }

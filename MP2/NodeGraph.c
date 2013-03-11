@@ -8,6 +8,7 @@ void init_graph(NodeGraph* graph, int my_node_number, int node_port) {
   graph->num_links = 0;
   graph->links = malloc(DEFAULTARRAYSIZE * sizeof(Link));
   graph->routes = NULL;
+  graph->run_djikstras = 1;
 
   add_node(graph, my_node_number, node_port);
   graph->my_node = &graph->nodes[0];
@@ -150,6 +151,17 @@ void print_graph(NodeGraph* graph) {
     }
   }
 
+}
+
+Node* get_hop(NodeGraph* graph, int destination_number) {
+  int i;
+
+  if ( graph->routes != NULL ) {
+    for (i = 0; i < graph->num_nodes; i++) {
+      
+    }
+  }
+  return NULL;
 }
 
 void destroy_graph(NodeGraph* graph) {

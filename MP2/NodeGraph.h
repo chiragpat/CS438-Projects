@@ -46,6 +46,7 @@ typedef struct {
   int links_size;
 
   Hop *routes;
+  int run_djikstras;
 } NodeGraph;
 
 void init_graph(NodeGraph* graph, int my_node_number, int node_port);
@@ -56,6 +57,7 @@ void add_link_for_new_node(NodeGraph* graph, int node0_number, int new_node_numb
 Link* get_link(NodeGraph* graph, int node0_number, int node1_number);
 void edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_cost);
 void print_graph(NodeGraph* graph);
+Node* get_hop(NodeGraph* graph, int destination_number);
 void destroy_graph(NodeGraph* graph);
 
 #endif

@@ -65,7 +65,6 @@ int main(int argc, char *argv[]){
         broadcastOneLinkInfo(nodegraph, message, udpfd);
         sprintf(sendBuffer, "COST %d OK\n", message.cost);
         sendString(sockfd, sendBuffer);
-        print_graph(nodegraph);
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -79,6 +78,13 @@ int main(int argc, char *argv[]){
 
       int controlInt = (int)receiveBuffer[0];
       if (controlInt == 1) {
+        if (nodegraph->run_djikstras == 1) {
+          build_hop_table(nodegraph);
+          nodegraph->run_djikstras = 0;
+        }
+
+        print_graph(nodegraph);
+
         dest = byteToInt(receiveBuffer+1);
         msg = receiveBuffer + 3;
 
@@ -100,15 +106,23 @@ int main(int argc, char *argv[]){
         }
       }
       else if (controlInt == 2) {
+        // print_graph(nodegraph);
+
+        if (nodegraph->run_djikstras == 1) {
+          build_hop_table(nodegraph);
+          nodegraph->run_djikstras = 0;
+        }
+
+        print_graph(nodegraph);
         msg = receiveBuffer + 3;
 
         printf("Message: %s\n", msg);
         sprintf(sendBuffer, "RECEIVED %s\n", msg);
         sendString(sockfd, sendBuffer);
       }
-      else {
+      else if(controlInt == 3) {
         LinkMessage message;
-        memcpy(&message, receiveBuffer, sizeof(LinkMessage));
+        memcpy(&message, receiveBuffer+1, sizeof(LinkMessage));
         printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
         Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
@@ -138,8 +152,8 @@ int main(int argc, char *argv[]){
           }
 
           broadcastOneLinkInfo(nodegraph, message, udpfd);
-          print_graph(nodegraph);
         }
+        nodegraph->run_djikstras = 1;
       }
 
     }
@@ -250,13 +264,15 @@ void broadcastLinkInfo(NodeGraph* graph, int udpfd) {
 
 void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd) {
   int i;
-  char destPort[MAXDATASIZE];
+  char destPort[MAXDATASIZE], sendBuffer[MAXDATASIZE];
+  sendBuffer[0] = (char) 3;
+  memcpy(sendBuffer + 1, &message, sizeof(LinkMessage));
   Node *my_node = graph->my_node;
 
   for (i = 0; i < my_node->num_neighbours; i++) {
     Node *node = (Node *) my_node->neighbours[i];
     sprintf(destPort, "%d", node->node_port);
-    sendUDPMessageTo("127.0.0.1", destPort, (char *) &message, sizeof(LinkMessage));
+    sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, sizeof(LinkMessage)+1);
   }
 }
 

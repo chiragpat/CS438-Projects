@@ -9,13 +9,16 @@ CC_ARGS=${CC_OPTS} ${CC_LIBS} ${CC_DEFINES} ${CC_INCLUDES}
 .PHONY=clean
 
 #target "all" depends on all others
-all: router test
+all: router router2 test
 
 router: router.c router.h NodeGraph.h NodeGraph.c NetworkUtils.h NetworkUtils.c
 	${CC} ${CC_ARGS} -o router NodeGraph.c NetworkUtils.c router.c
 
-test: GraphTests.c NodeGraph.h NodeGraph.c Djikstras.h Djikstras.c heap.h
-	${CC} ${CC_ARGS} -o GraphTests GraphTests.c NodeGraph.c Djikstras.c heap.h
+router2: router2.c router2.h NodeGraph.h NodeGraph.c NetworkUtils.h NetworkUtils.c Djikstras.h Djikstras.c  
+	${CC} ${CC_ARGS} -o router2 NodeGraph.c NetworkUtils.c router2.c Djikstras.c 
+
+test: GraphTests.c NodeGraph.h NodeGraph.c Djikstras.h Djikstras.c
+	${CC} ${CC_ARGS} -o GraphTests GraphTests.c NodeGraph.c Djikstras.c
 
 clean:
-	rm -f router GraphTests *.o log/*
+	rm -f router router1 router2 GraphTests *.o log/*
