@@ -1,29 +1,39 @@
 #include "Djikstras.h"
+#include "heap.h"
 
-int compare(void *key1, void *key2) {
-  Node *node1 = (Node *) key1;
-  Node *node2 = (Node *) key2;
+int compare(struct heap_node* a, struct heap_node* b) {
+  Node *node1 = (Node *) a->value;
+  Node *node2 = (Node *) b->value;
 
-  if (node1->distance > node2->distance) {
+  if (node1->distance < node2->distance) {
     return 1;
-  }
-  else if (node1->distance < node2->distance) {
-    return -1;
   }
   else {
     return 0;
   }
+
+}
+
+struct heap_node * get_heap_node(struct heap_node *nodes, Node *node_to_find, int num_nodes) {
+  int i;
+  for ( i = 0; i < num_nodes; i++ ) {
+    if (nodes[i].value == node_to_find) {
+      return &nodes[i];
+    }
+  }
+  return NULL;  
 }
 
 void build_hop_table(NodeGraph* graph) {
   int num_routes, i, temp, j;
   Node *visited_nodes = malloc(graph->num_nodes*sizeof(Node));
-  heap *unvisited_nodes = malloc(sizeof(heap));
+  struct heap *unvisited_nodes = malloc(sizeof(struct heap));
+  struct heap_node unvisited_heap_nodes[graph->num_nodes];
   free(graph->routes);
   graph->routes = malloc(graph->num_nodes * sizeof(Hop));
 
   num_routes = 0;
-  heap_create(unvisited_nodes, graph->num_nodes, compare);
+  heap_init(unvisited_nodes);
   for (i = 0; i < graph->num_nodes; i++) {
     if (&graph->nodes[i] == graph->my_node) {
       graph->nodes[i].distance = 0;
@@ -35,13 +45,15 @@ void build_hop_table(NodeGraph* graph) {
       graph->nodes[i].previous = NULL;
       graph->nodes[i].hop = NULL;
     }
-    heap_insert(unvisited_nodes, &graph->nodes[i], NULL);
+    heap_node_init(&unvisited_heap_nodes[i], &graph->nodes[i]);
+    heap_insert(compare, unvisited_nodes, &unvisited_heap_nodes[i]);
   }
 
-  while (heap_size(unvisited_nodes) != 0) {
+  while (!heap_empty(unvisited_nodes)) {
     Node *node;
 
-    heap_delmin(unvisited_nodes, (void *) &node, (void *) &temp);
+    struct heap_node* h_node = heap_take(compare, unvisited_nodes);
+    node = h_node->value;
     visited_nodes[num_routes] = *node;
     
     graph->routes[num_routes].destination_node = node;
@@ -53,15 +65,14 @@ void build_hop_table(NodeGraph* graph) {
       break;
     }
 
-    
-
     for (j = 0; j < node->num_neighbours; j++) {
       Node *temp_node;
       Node *neigh_node = (Node *) node->neighbours[j];
       Link *link = (Link *) node->neighbour_links[j];
-
-      if ( (link->cost != -1) && (contains(visited_nodes, num_routes, neigh_node) == -1)) {
-        printf("%d:%d\n", node->node_number, neigh_node->node_number);
+      printf("%d:%d\n", node->node_number, neigh_node->node_number);
+      struct heap_node* neigh_h_node = get_heap_node(unvisited_heap_nodes, neigh_node, graph->num_nodes);
+      if ( (link->cost != -1) && (heap_node_in_heap(neigh_h_node))) {
+        
         int altdist = node->distance + link->cost;
         if (altdist < neigh_node->distance) {
           if (node->hop == NULL) {
@@ -72,24 +83,25 @@ void build_hop_table(NodeGraph* graph) {
           }
           neigh_node->distance = altdist;
           neigh_node->previous = (struct Node*) node;
-          heap_delmin(unvisited_nodes, (void *) &temp_node, (void *) &temp);
-          heap_insert(unvisited_nodes, (void *) temp_node, NULL);
+          heap_decrease(compare, unvisited_nodes, neigh_h_node);
         }
-      } 
+      }
+
     }
 
   }
 
-  while (heap_size(unvisited_nodes) != 0) {
+  while (!heap_empty(unvisited_nodes)) {
     Node *node;
-    heap_delmin(unvisited_nodes, (void *) &node, (void *) &temp);
+    struct heap_node* h_node = heap_take(compare, unvisited_nodes);
+    node = h_node->value;
     graph->routes[num_routes].destination_node = node;
     graph->routes[num_routes].next_hop = (Node *) node->hop;
     graph->routes[num_routes].cost = node->distance;
     num_routes++;
   }
 
-  heap_destroy(unvisited_nodes);
+  
   free(visited_nodes);
   free(unvisited_nodes);
 }

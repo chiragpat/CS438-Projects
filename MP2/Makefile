@@ -14,8 +14,8 @@ all: router test
 router: router.c router.h NodeGraph.h NodeGraph.c NetworkUtils.h NetworkUtils.c
 	${CC} ${CC_ARGS} -o router NodeGraph.c NetworkUtils.c router.c
 
-test: GraphTests.c NodeGraph.h NodeGraph.c Djikstras.h Djikstras.c heap.h heap.c
-	${CC} ${CC_ARGS} -o GraphTests GraphTests.c NodeGraph.c Djikstras.c heap.c
+test: GraphTests.c NodeGraph.h NodeGraph.c Djikstras.h Djikstras.c heap.h
+	${CC} ${CC_ARGS} -o GraphTests GraphTests.c NodeGraph.c Djikstras.c heap.h
 
 clean:
 	rm -f router GraphTests *.o log/*
