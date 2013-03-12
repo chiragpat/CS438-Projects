@@ -156,7 +156,6 @@ int main(int argc, char *argv[]){
 
   //Clean up
   close(sockfd);
-  fclose(socket_file);
   destroy_graph(nodegraph);
   free(nodegraph);
   return 0;

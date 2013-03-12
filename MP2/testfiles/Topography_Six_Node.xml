@@ -33,11 +33,11 @@
     </Link>
   </Topology>
   <Events>
-      <!-- <Link>
+      <Link>
         <node>4</node>
         <node>5</node>
         <cost>-1</cost>
-      </Link> -->
+      </Link>
       <Message>
         <src>1</src>
         <dst>2</dst>
@@ -58,10 +58,10 @@
         <dst>6</dst>
         <data>zcxxzcxzcxz</data>
       </Message>
-      <!-- <Message>
+      <Message>
         <src>1</src>
         <dst>4</dst>
         <data>aqwewasdsaf</data>
-      </Message> -->
+      </Message>
     </Events>
 </Simulation>
