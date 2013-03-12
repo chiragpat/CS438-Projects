@@ -48,11 +48,11 @@
         <dst>6</dst>
         <data>long path</data>
       </Message>
-      <!-- <Link>
+      <Link>
         <node>5</node>
         <node>6</node>
         <cost>-1</cost>
-      </Link> -->
+      </Link>
       <Message>
         <src>1</src>
         <dst>6</dst>
