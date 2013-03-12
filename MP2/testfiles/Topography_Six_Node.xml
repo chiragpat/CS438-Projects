@@ -33,30 +33,35 @@
     </Link>
   </Topology>
   <Events>
-      <Link>
+      <!-- <Link>
         <node>4</node>
         <node>5</node>
         <cost>-1</cost>
-      </Link>
+      </Link> -->
       <Message>
         <src>1</src>
         <dst>2</dst>
         <data>asdf</data>
       </Message>
-      <Link>
+      <Message>
+        <src>1</src>
+        <dst>6</dst>
+        <data>long path</data>
+      </Message>
+      <!-- <Link>
         <node>5</node>
         <node>6</node>
         <cost>-1</cost>
-      </Link>
+      </Link> -->
       <Message>
         <src>1</src>
-        <dst>3</dst>
+        <dst>6</dst>
         <data>zcxxzcxzcxz</data>
       </Message>
-      <Message>
+      <!-- <Message>
         <src>1</src>
         <dst>4</dst>
         <data>aqwewasdsaf</data>
-      </Message>
+      </Message> -->
     </Events>
 </Simulation>

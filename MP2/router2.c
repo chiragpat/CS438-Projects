@@ -1,8 +1,9 @@
-#include "router.h"
+#include "router2.h"
 
 int main(int argc, char *argv[]){
   int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd;
-  int src, dest, numbytes;
+  int src, numbytes;
+  unsigned short dest;
   char *msg, *host;
   FILE* socket_file;
   char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE], receiveBuffer2[MAXDATASIZE];
@@ -81,44 +82,76 @@ int main(int argc, char *argv[]){
         if (nodegraph->run_djikstras == 1) {
           build_hop_table(nodegraph);
           nodegraph->run_djikstras = 0;
+          print_graph(nodegraph);
         }
 
-        print_graph(nodegraph);
-
         dest = byteToInt(receiveBuffer+1);
+        // memcpy(&dest, receiveBuffer+1, 2);
         msg = receiveBuffer + 3;
+
+        Message message_t;
+        message_t.destination_number = dest;
+        strcpy(message_t.message, msg);
 
         printf("Destination: %d, Message: %s\n", dest, msg);
 
-        sprintf(sendBuffer, "LOG FWD %d %s\n", dest, msg);
-        sendString(sockfd, sendBuffer);
-        receiveAndPrint(sockfd, receiveBuffer2, 1);
-
-        Link *link = get_link(nodegraph, addr, dest);
-        Node *destinationNode = get_node(nodegraph, dest);
-
-        if (destinationNode != NULL && link != NULL && link->cost != -1) {
-          sprintf(destPort, "%d", destinationNode->node_port);
-          memcpy(sendBuffer, receiveBuffer, (size_t) strlen(msg)+3);
-          sendBuffer[0] = (char) 2;
-          strcat(sendBuffer, "\n");
-          sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, strlen(msg)+3);
+        Node* hop = get_hop(nodegraph, dest);
+        if (hop == NULL) {
+          sprintf(sendBuffer, "DROP %s\n", msg);
+          sendString(sockfd, sendBuffer);
         }
+        else {
+          sprintf(sendBuffer, "LOG FWD %d %s\n", hop->node_number, msg);
+          sendString(sockfd, sendBuffer);
+          receiveAndPrint(sockfd, receiveBuffer2, 1);
+
+          sprintf(destPort, "%d", hop->node_port);
+          sendBuffer[0] = (char) 2;
+          memcpy(sendBuffer+1, &message_t, sizeof(Message));
+          sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, sizeof(Message)+1);
+        }
+
       }
       else if (controlInt == 2) {
-        // print_graph(nodegraph);
-
         if (nodegraph->run_djikstras == 1) {
           build_hop_table(nodegraph);
           nodegraph->run_djikstras = 0;
+          print_graph(nodegraph);
         }
 
-        print_graph(nodegraph);
-        msg = receiveBuffer + 3;
+        Message message_t;
+        memcpy(&message_t, receiveBuffer+1, sizeof(Message));
+        dest = message_t.destination_number;
+        msg = message_t.message;
+        // dest = byteToInt(receiveBuffer+1);
+        // memcpy(&dest, receiveBuffer+1, sizeof(unsigned short));
+        // msg = receiveBuffer + 3;
+        
 
-        printf("Message: %s\n", msg);
-        sprintf(sendBuffer, "RECEIVED %s\n", msg);
-        sendString(sockfd, sendBuffer);
+        printf("Message for %d: %s\n", dest, msg);
+        if (dest == nodegraph->my_node->node_number) {
+          sprintf(sendBuffer, "RECEIVED %s\n", msg);
+          sendString(sockfd, sendBuffer);
+        }
+        else {
+          Node* hop = get_hop(nodegraph, dest);
+          if (hop == NULL) {
+            sprintf(sendBuffer, "DROP %s\n", msg);
+            sendString(sockfd, sendBuffer);
+          }
+          else {
+            sprintf(sendBuffer, "LOG FWD %d %s\n", hop->node_number, msg);
+            sendString(sockfd, sendBuffer);
+            receiveAndPrint(sockfd, receiveBuffer2, 1);
+
+            sprintf(destPort, "%d", hop->node_port);
+            
+            sendBuffer[0] = (char) 2;
+            memcpy(sendBuffer+1, &message_t, sizeof(Message));
+            sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, sizeof(Message)+1);
+          }
+        }
+        
       }
       else if(controlInt == 3) {
         LinkMessage message;
@@ -276,8 +309,8 @@ void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd) {
   }
 }
 
-int byteToInt(char* p) {
-  int result = 0;  // initialize;
+unsigned short byteToInt(char* p) {
+  unsigned short result = 0;  // initialize;
   char* rv = (char*)&result;
   rv[0] = p[1];
   rv[1] = p[0];

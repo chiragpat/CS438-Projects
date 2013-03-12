@@ -159,7 +159,10 @@ Node* get_hop(NodeGraph* graph, int destination_number) {
 
   if ( graph->routes != NULL ) {
     for (i = 0; i < graph->num_nodes; i++) {
-      
+      Hop hop = graph->routes[i];
+      if (hop.destination_node->node_number == destination_number) {
+        return hop.next_hop;
+      }
     }
   }
   return NULL;
