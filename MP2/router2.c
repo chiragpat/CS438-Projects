@@ -59,13 +59,17 @@ int main(int argc, char *argv[]){
   while( (rv=select(maxfd+1, &fds, NULL, NULL, NULL)) >=0 ){
 
     if (FD_ISSET(sockfd, &fds)) {
-      receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
+      // printf("%s before print\n", "Here");
+      // receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
+      receiveAndPrint(sockfd, receiveBuffer, 1);
+      // printf("Here after print\n");
 
       if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
         LinkMessage message = updateNodeList(receiveBuffer, addr, nodegraph);
         broadcastOneLinkInfo(nodegraph, message, udpfd);
         sprintf(sendBuffer, "COST %d OK\n", message.cost);
         sendString(sockfd, sendBuffer);
+        printf("Here\n");
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -86,7 +90,6 @@ int main(int argc, char *argv[]){
         }
 
         dest = byteToInt(receiveBuffer+1);
-        // memcpy(&dest, receiveBuffer+1, 2);
         msg = receiveBuffer + 3;
 
         Message message_t;
@@ -123,11 +126,7 @@ int main(int argc, char *argv[]){
         memcpy(&message_t, receiveBuffer+1, sizeof(Message));
         dest = message_t.destination_number;
         msg = message_t.message;
-        // dest = byteToInt(receiveBuffer+1);
-        // memcpy(&dest, receiveBuffer+1, sizeof(unsigned short));
-        // msg = receiveBuffer + 3;
         
-
         printf("Message for %d: %s\n", dest, msg);
         if (dest == nodegraph->my_node->node_number) {
           sprintf(sendBuffer, "RECEIVED %s\n", msg);
@@ -203,7 +202,6 @@ int main(int argc, char *argv[]){
 
   //Clean up
   close(sockfd);
-  fclose(socket_file);
   destroy_graph(nodegraph);
   free(nodegraph);
   return 0;
