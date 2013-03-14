@@ -15,7 +15,7 @@
 #include "NetworkUtils.h"
 #include "NodeGraph.h"
 
-#define MAXDATASIZE 1024
+#define MAXDATASIZE 1401
 
 typedef struct {
   int controlInt;

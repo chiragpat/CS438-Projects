@@ -157,7 +157,7 @@ int main(int argc, char *argv[]){
         memcpy(&message, receiveBuffer+1, sizeof(LinkMessage));
         printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
-        Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
+        Link *link = (Link *) get_link(nodegraph, message.node0_number, message.node1_number);
 
         if (link == NULL || link->cost != message.cost) {
           Node *node0 = get_node(nodegraph, message.node0_number);

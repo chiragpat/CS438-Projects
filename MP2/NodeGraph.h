@@ -7,10 +7,10 @@
 #include <errno.h>
 #include <string.h>
 
-#define MAXDATASIZE 1024
-#define DEFAULTARRAYSIZE 50
+#define MAXDATASIZE 1401
+#define DEFAULTARRAYSIZE 1
 
-typedef struct {
+typedef struct Node {
   int node_number;
   int node_port;
   int num_neighbours;
@@ -22,7 +22,7 @@ typedef struct {
   struct Link **neighbour_links;
 } Node;
 
-typedef struct {
+typedef struct Link {
   Node *node0;
   Node *node1;
   int cost;
@@ -37,11 +37,11 @@ typedef struct {
 typedef struct {
   Node *my_node;
 
-  Node *nodes;
+  Node **nodes;
   int num_nodes;
   int nodes_size;
 
-  Link *links;
+  Link **links;
   int num_links;
   int links_size;
 

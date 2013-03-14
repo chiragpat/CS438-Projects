@@ -10,17 +10,17 @@ void build_hop_table(NodeGraph* graph) {
   num_routes = 0;
 
   for (i = 0; i < graph->num_nodes; i++) {
-    if (&graph->nodes[i] == graph->my_node) {
-      graph->nodes[i].distance = 0;
-      graph->nodes[i].previous = NULL;
-      graph->nodes[i].hop = NULL;
+    if (graph->nodes[i] == graph->my_node) {
+      graph->nodes[i]->distance = 0;
+      graph->nodes[i]->previous = NULL;
+      graph->nodes[i]->hop = NULL;
     }
     else {
-      graph->nodes[i].distance = INT_MAX;
-      graph->nodes[i].previous = NULL;
-      graph->nodes[i].hop = NULL;
+      graph->nodes[i]->distance = INT_MAX;
+      graph->nodes[i]->previous = NULL;
+      graph->nodes[i]->hop = NULL;
     }
-    unvisited_nodes[num_unvisited_nodes] = &graph->nodes[i];
+    unvisited_nodes[num_unvisited_nodes] = graph->nodes[i];
     num_unvisited_nodes++;
   }
 
