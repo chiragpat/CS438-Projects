@@ -1,0 +1,1 @@
+for i in `head -n 25 ports.txt` ; do ./router2 localhost 5000 $i & done
