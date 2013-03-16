@@ -21,4 +21,4 @@ test: GraphTests.c NodeGraph.h NodeGraph.c Djikstras.h Djikstras.c
 	${CC} ${CC_ARGS} -o GraphTests GraphTests.c NodeGraph.c Djikstras.c
 
 clean:
-	rm -f router router1 router2 GraphTests *.o log/*
+	rm -r -f router router1 router2 GraphTests *.o log/* *.dSYM/
