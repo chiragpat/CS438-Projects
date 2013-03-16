@@ -105,7 +105,9 @@ Link* get_link(NodeGraph* graph, int node0_number, int node1_number) {
 
 void edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_cost) {
   Link *link = get_link(graph, node0_number, node1_number);
-  link->cost = new_cost;
+  if ( link != NULL ){
+    link->cost = new_cost;
+  }
 }
 
 void print_graph(NodeGraph* graph) {

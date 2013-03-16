@@ -7,8 +7,7 @@
 #include <errno.h>
 #include <string.h>
 
-#define MAXDATASIZE 1401
-#define DEFAULTARRAYSIZE 1
+#define DEFAULTARRAYSIZE 50
 
 typedef struct Node {
   int node_number;
