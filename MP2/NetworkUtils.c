@@ -89,7 +89,7 @@ int openUDPListenerSocket(char *port){
 
   freeaddrinfo(servinfo);
 
-  printf("listener: waiting to recvfrom...%s\n", port);
+  // printf("listener: waiting to recvfrom...%s\n", port);
 
   return sockfd;
 }
@@ -130,7 +130,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
     return 2;
   }
 
-  printf("Sending to %s\n", port);
+  // printf("Sending to %s\n", port);
   sendStringUDP(sockfd, p, msg, bytes);
 
   //Clean Up

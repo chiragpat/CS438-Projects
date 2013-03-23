@@ -45,10 +45,10 @@ Node* get_node(NodeGraph* graph, int node_number) {
   return NULL;
 }
 
-void add_link(NodeGraph* graph, int node0_number, int node1_number, int cost) {
+void add_link(NodeGraph* graph, int node0_number, int node1_number, int cost, time_t *t) {
   Node *node0 = get_node(graph, node0_number);
   Node *node1 = get_node(graph, node1_number);
-  
+
   if (node0 != NULL && node1 != NULL) {
     if (graph->links_size == graph->num_links) {
       graph->links = realloc(graph->links, 2*graph->links_size*sizeof(Link));
@@ -58,7 +58,17 @@ void add_link(NodeGraph* graph, int node0_number, int node1_number, int cost) {
     graph->links[graph->num_links] = (Link *) malloc(sizeof(Link));
     graph->links[graph->num_links]->node0 = node0;    
     graph->links[graph->num_links]->node1 = node1;    
-    graph->links[graph->num_links]->cost = cost;    
+    graph->links[graph->num_links]->cost = cost;
+
+    if ( t == NULL ) {
+      graph->links[graph->num_links]->t = time(NULL);
+    } 
+    else {
+      graph->links[graph->num_links]->t = *t;  
+    }   
+    
+    
+
 
     if (node0->neighbours_size == node0->num_neighbours) {
       node0->neighbours = realloc(node0->neighbours, 2*node0->neighbours_size*sizeof(struct Node*));
@@ -82,11 +92,12 @@ void add_link(NodeGraph* graph, int node0_number, int node1_number, int cost) {
     node0->num_neighbours++;
     node1->num_neighbours++;
   }
+
 }
 
-void add_link_for_new_node(NodeGraph* graph, int node0_number, int new_node_number, int new_node_port, int cost) {
+void add_link_for_new_node(NodeGraph* graph, int node0_number, int new_node_number, int new_node_port, int cost, time_t* t) {
   add_node(graph, new_node_number, new_node_port);
-  add_link(graph, node0_number, new_node_number, cost);
+  add_link(graph, node0_number, new_node_number, cost, t);
 }
 
 Link* get_link(NodeGraph* graph, int node0_number, int node1_number) {
@@ -103,10 +114,17 @@ Link* get_link(NodeGraph* graph, int node0_number, int node1_number) {
   return NULL;
 }
 
-void edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_cost) {
+Link* edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_cost, time_t* new_time) {
   Link *link = get_link(graph, node0_number, node1_number);
+
   if ( link != NULL ){
     link->cost = new_cost;
+    if (new_time == NULL) {
+      link->t = time(NULL);
+    }
+    else {
+      link->t = *new_time;
+    }
   }
 }
 

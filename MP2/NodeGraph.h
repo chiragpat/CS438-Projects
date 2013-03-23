@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 #define DEFAULTARRAYSIZE 50
 
@@ -25,6 +26,7 @@ typedef struct Link {
   Node *node0;
   Node *node1;
   int cost;
+  time_t t;
 } Link;
 
 typedef struct {
@@ -51,10 +53,10 @@ typedef struct {
 void init_graph(NodeGraph* graph, int my_node_number, int node_port);
 void add_node(NodeGraph* graph, int node_number, int node_port);
 Node* get_node(NodeGraph* graph, int node_number);
-void add_link(NodeGraph* graph, int node0_number, int node1_number, int cost);
-void add_link_for_new_node(NodeGraph* graph, int node0_number, int new_node_number, int new_node_port, int cost);
+void add_link(NodeGraph* graph, int node0_number, int node1_number, int cost, time_t* t);
+void add_link_for_new_node(NodeGraph* graph, int node0_number, int new_node_number, int new_node_port, int cost, time_t* t);
 Link* get_link(NodeGraph* graph, int node0_number, int node1_number);
-void edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_cost);
+Link* edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_cost, time_t* new_time);
 void print_graph(NodeGraph* graph);
 Node* get_hop(NodeGraph* graph, int destination_number);
 void destroy_graph(NodeGraph* graph);

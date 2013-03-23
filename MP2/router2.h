@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include "NetworkUtils.h"
 #include "NodeGraph.h"
 #include "Djikstras.h"
@@ -25,6 +26,7 @@ typedef struct {
   int node0_port;
   int node1_port;
   int cost;
+  time_t t;
 } LinkMessage;
 
 typedef struct {

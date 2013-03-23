@@ -118,21 +118,21 @@ int main(int argc, char *argv[]){
           Node *node1 = get_node(nodegraph, message.node1_number);
 
           if (node0 == NULL) {
-            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost);
+            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost, NULL);
           }
           else if (node1 == NULL) {
-            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, NULL);
           }
           else if (node0 == NULL && node1 == NULL) {
             add_node(nodegraph, message.node0_number, message.node0_port);
-            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, NULL);
           }
           else {
             if (link) {
-              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost, NULL);
             }
             else {
-              add_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+              add_link(nodegraph, message.node0_number, message.node1_number, message.cost, NULL);
             }
             
           }
@@ -189,7 +189,7 @@ void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) 
         tok = strtok(NULL, " \n");
         i++; 
       }
-      add_link_for_new_node(nodegraph, nodegraph->my_node->node_number, node_number, node_port, cost);
+      add_link_for_new_node(nodegraph, nodegraph->my_node->node_number, node_number, node_port, cost, NULL);
     }
   }
 }
@@ -219,7 +219,7 @@ LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph 
     i++;
   }
 
-  edit_link(nodegraph, first_node_number, second_node_number, new_cost);
+  edit_link(nodegraph, first_node_number, second_node_number, new_cost, NULL);
   message.controlInt = 3;
   message.node0_number = first_node_number;
   message.node1_number = second_node_number;
