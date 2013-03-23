@@ -19,6 +19,7 @@
 #define MAXDATASIZE 1401
 
 typedef struct {
+  int source_node;
   int controlInt;
   int node0_number;
   int node1_number;
@@ -32,7 +33,8 @@ typedef struct {
   char message[MAXDATASIZE];
 } Message;
 
-void getAndSetupNeighbours(NodeGraph *nodegraph, int sockfd, FILE* socket_file);
+void ready();
+int getAndSetupNeighbours(NodeGraph *nodegraph, int sockfd, FILE* socket_file);
 LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph);
 void broadcastLinkInfo(NodeGraph* graph, int udpfd);
 void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd);
