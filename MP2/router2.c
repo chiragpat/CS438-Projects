@@ -2,6 +2,7 @@
 
 int main(int argc, char *argv[]){
   int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd;
+  int ack_count;
   int src, numbytes;
   unsigned short dest;
   char *msg, *host;
@@ -14,7 +15,8 @@ int main(int argc, char *argv[]){
 
   NodeGraph * nodegraph = malloc(sizeof(NodeGraph));
   fd_set fds;
-  
+  ack_count = 0;
+
   if (argc != 4) {
     fprintf(stderr,"usage: router hostname tcpport udpport\n");
     exit(1);
@@ -59,10 +61,7 @@ int main(int argc, char *argv[]){
   while( (rv=select(maxfd+1, &fds, NULL, NULL, NULL)) >=0 ){
 
     if (FD_ISSET(sockfd, &fds)) {
-      // printf("%s before print\n", "Here");
-      // receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
       receiveAndPrint(sockfd, receiveBuffer, 1);
-      // printf("Here after print\n");
 
       if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
         LinkMessage message = updateNodeList(receiveBuffer, addr, nodegraph);
