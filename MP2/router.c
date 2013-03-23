@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
   getAndSetupNeighbours(nodegraph, sockfd, socket_file);
   broadcastLinkInfo(nodegraph, udpfd);
 
-  print_graph(nodegraph);
+  // print_graph(nodegraph);
   
   sendString(sockfd, "READY\n");
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
         broadcastOneLinkInfo(nodegraph, message, udpfd);
         sprintf(sendBuffer, "COST %d OK\n", message.cost);
         sendString(sockfd, sendBuffer);
-        print_graph(nodegraph);
+        // print_graph(nodegraph);
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
       else {
         LinkMessage message;
         memcpy(&message, receiveBuffer, sizeof(LinkMessage));
-        printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
+        // printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
         Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
 
@@ -118,27 +118,27 @@ int main(int argc, char *argv[]){
           Node *node1 = get_node(nodegraph, message.node1_number);
 
           if (node0 == NULL) {
-            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost, NULL);
+            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost, &message.t);
           }
           else if (node1 == NULL) {
-            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, NULL);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, &message.t);
           }
           else if (node0 == NULL && node1 == NULL) {
             add_node(nodegraph, message.node0_number, message.node0_port);
-            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, NULL);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, &message.t);
           }
           else {
             if (link) {
-              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost, NULL);
+              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost, &message.t);
             }
             else {
-              add_link(nodegraph, message.node0_number, message.node1_number, message.cost, NULL);
+              add_link(nodegraph, message.node0_number, message.node1_number, message.cost, &message.t);
             }
             
           }
 
           broadcastOneLinkInfo(nodegraph, message, udpfd);
-          print_graph(nodegraph);
+          // print_graph(nodegraph);
         }
       }
 
@@ -219,11 +219,12 @@ LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph 
     i++;
   }
 
-  edit_link(nodegraph, first_node_number, second_node_number, new_cost, NULL);
+  Link* link = edit_link(nodegraph, first_node_number, second_node_number, new_cost, NULL);
   message.controlInt = 3;
   message.node0_number = first_node_number;
   message.node1_number = second_node_number;
   message.cost = new_cost;
+  message.t = link->t;
 
   return message;
 }
@@ -242,6 +243,7 @@ void broadcastLinkInfo(NodeGraph* graph, int udpfd) {
     message.node1_number = node->node_number;
     message.node1_port = node->node_port;
     message.cost = link->cost;
+    message.t = link->t;
 
     broadcastOneLinkInfo(graph, message, udpfd);
   }

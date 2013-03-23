@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include "NetworkUtils.h"
 #include "NodeGraph.h"
 
@@ -24,6 +25,7 @@ typedef struct {
   int node0_port;
   int node1_port;
   int cost;
+  time_t t;
 } LinkMessage;
 
 void getAndSetupNeighbours(NodeGraph *nodegraph, int sockfd, FILE* socket_file);
