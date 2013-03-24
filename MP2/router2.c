@@ -14,15 +14,17 @@ int main(int argc, char *argv[]){
   socklen_t addr_len;
   addr_len = sizeof(their_addr);
 
+  if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
+    printf("netid: patel178\n");
+    exit(0);
+  }
+  
   NodeGraph * nodegraph = malloc(sizeof(NodeGraph));
   fd_set fds;
   ready = 0;
   ack_count = 0;
 
-  if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
-    printf("netid: patel178\n");
-    exit(0);
-  }
+  
 
   if (argc != 4) {
     fprintf(stderr,"usage: router hostname tcpport udpport\n");
@@ -73,7 +75,6 @@ int main(int argc, char *argv[]){
       if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
         LinkMessage message = updateNodeList(receiveBuffer, addr, nodegraph);
         if (message.controlInt != 0) {
-          // printf("Here broadcastLinkInfo \n");
           broadcastOneLinkInfo(nodegraph, message, udpfd);
         }
         sprintf(sendBuffer, "COST %d OK\n", message.cost);
@@ -120,7 +121,7 @@ int main(int argc, char *argv[]){
         else {
           char sendBuffer2[sizeof(Message)+1];
 
-          sprintf(sendBuffer, "LOG FWD %d %s\n", hop->node_number, msg);
+          sprintf(sendBuffer, "LOG FWD %d %s\n", dest, msg);
           sendString(sockfd, sendBuffer);
           receiveAndPrint(sockfd, receiveBuffer2, 1);
 
