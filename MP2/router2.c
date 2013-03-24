@@ -210,11 +210,9 @@ int main(int argc, char *argv[]){
 
 void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) {
   int ret, i, node_number, node_port, cost;
-  int node_count;
   char temp[MAXDATASIZE], receiveBuffer[MAXDATASIZE];
   char *tok;
 
-  node_count = 0;
   strcpy(receiveBuffer, "");
   sendString(sockfd, "NEIGH?\n");
   while ( strcmp(receiveBuffer, "DONE\n") != 0 ) {
@@ -241,8 +239,6 @@ void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) 
       add_link_for_new_node(nodegraph, nodegraph->my_node->node_number, node_number, node_port, cost, NULL);
     }
   }
-
-  return node_count;
 }
 
 LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph){

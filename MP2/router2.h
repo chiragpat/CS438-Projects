@@ -17,8 +17,6 @@
 #include "NodeGraph.h"
 #include "Djikstras.h"
 
-#define MAXDATASIZE 1401
-
 typedef struct {
   int source_node;
   int controlInt;
