@@ -161,7 +161,7 @@ int main(int argc, char *argv[]){
       else if(controlInt == 3) {
         LinkMessage message;
         memcpy(&message, receiveBuffer+1, sizeof(LinkMessage));
-        // printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
+        printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
         Link *link = (Link *) get_link(nodegraph, message.node0_number, message.node1_number);
 
