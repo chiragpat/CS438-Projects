@@ -19,6 +19,11 @@ int main(int argc, char *argv[]){
   ready = 0;
   ack_count = 0;
 
+  if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
+    printf("netid: patel178\n");
+    exit(0);
+  }
+
   if (argc != 4) {
     fprintf(stderr,"usage: router hostname tcpport udpport\n");
     exit(1);
