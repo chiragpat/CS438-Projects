@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
         else {
           char sendBuffer2[sizeof(Message)+1];
 
-          sprintf(sendBuffer, "LOG FWD %d %s\n", dest, msg);
+          sprintf(sendBuffer, "LOG FWD %d %s\n", hop->node_number, msg);
           sendString(sockfd, sendBuffer);
           receiveAndPrint(sockfd, receiveBuffer2, 1);
 
