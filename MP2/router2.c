@@ -320,7 +320,9 @@ void broadcastLinkInfo(NodeGraph* graph, int udpfd) {
     message.cost = link->cost;
     message.t = link->t;
 
-    broadcastOneLinkInfo(graph, message, udpfd);
+    if (link->cost != -1) {
+       broadcastOneLinkInfo(graph, message, udpfd);
+    }
   }
 }
 
@@ -335,9 +337,14 @@ void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd) {
 
   for (i = 0; i < my_node->num_neighbours; i++) {
     Node *node = (Node *) my_node->neighbours[i];
-    sprintf(destPort, "%d", node->node_port);
-    // sendUDPMessageTo("127.0.0.1", destPort, (char *) &message, sizeof(LinkMessage));
-    sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, sizeof(LinkMessage)+1);
+    Link *link = (Link *) my_node->neighbour_links[i];
+
+    if (link->cost != -1) {
+      sprintf(destPort, "%d", node->node_port);
+      // sendUDPMessageTo("127.0.0.1", destPort, (char *) &message, sizeof(LinkMessage));
+      sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, sizeof(LinkMessage)+1); 
+    }
+    
   }
 }
 
