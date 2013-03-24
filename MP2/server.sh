@@ -1,1 +1,1 @@
-java -jar manager.jar -f $1 -p 5000
+java -jar manager.jar -f $1 -p 5001

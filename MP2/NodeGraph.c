@@ -126,6 +126,8 @@ Link* edit_link(NodeGraph* graph, int node0_number, int node1_number, int new_co
       link->t = *new_time;
     }
   }
+
+  return link;
 }
 
 void print_graph(NodeGraph* graph) {

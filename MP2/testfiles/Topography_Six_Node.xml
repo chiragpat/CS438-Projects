@@ -33,11 +33,6 @@
     </Link>
   </Topology>
   <Events>
-      <Link>
-        <node>4</node>
-        <node>5</node>
-        <cost>-1</cost>
-      </Link>
       <Message>
         <src>1</src>
         <dst>2</dst>

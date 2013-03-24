@@ -1,1 +1,1 @@
-for i in `head -n ${1} ports.txt` ; do ./router2 localhost 5000 $i & done
+for i in `head -n ${1} ports.txt` ; do ./router2 localhost 5001 $i & done
