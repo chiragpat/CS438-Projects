@@ -72,7 +72,9 @@ int main(int argc, char *argv[]){
 
       if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
         LinkMessage message = updateNodeList(receiveBuffer, addr, nodegraph);
-        broadcastOneLinkInfo(nodegraph, message, udpfd);
+        if (message.controlInt != 0) {
+          broadcastOneLinkInfo(nodegraph, message, udpfd);
+        }
         sprintf(sendBuffer, "COST %d OK\n", message.cost);
         sendString(sockfd, sendBuffer);
         // print_graph(nodegraph);
@@ -175,7 +177,7 @@ int main(int argc, char *argv[]){
 
         Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
 
-        if (link == NULL || link->cost != message.cost) {
+        if (link == NULL || (link->cost != message.cost && (difftime(message.t, link->t)) > 0)) {
           Node *node0 = get_node(nodegraph, message.node0_number);
           Node *node1 = get_node(nodegraph, message.node1_number);
 
@@ -284,6 +286,11 @@ LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph 
   }
 
   Link* link = edit_link(nodegraph, first_node_number, second_node_number, new_cost, NULL);
+  if (link == NULL) {
+    message.controlInt = 0;
+    message.cost = new_cost;
+    return message;
+  }
   message.controlInt = 3;
   message.node0_number = first_node_number;
   message.node0_port = 0;
