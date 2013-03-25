@@ -1,0 +1,24 @@
+# CS438 MP2 Router
+
+## References
+
+* [Beej's Guide to Network Programming](http://beej.us/guide/bgnet/)
+* [CS438 Routing Lecture Slides](http://courses.engr.illinois.edu/cs438/lectures/routing.pdf)
+
+## General Architecture
+We use the select system call to switch between receiving on the udp socket and tcp socket.
+For the common part we decided to work together. We first created a NodeGraph DataStructure since we figured we would need it in the future. 
+Also we decided to put common Network Utility functions like receiving a line, sending a string etc. in its own file called NetworkUtils.c
+
+## Which Router?
+* router1: Kevin Strasberg (strasbe1)
+* router2: Chirag Patel (patel178)
+
+## Router1 Protocol
+Router1 also uses Djikstras to figure out a path but instead it uses source routing to passs the message along. Use a Link State Packet similar to Link State Routing to know the full topology. Hence the full path is in the header of the packet.Faced issues similar to router2 with concurrency in between the ready and knowing the topology. Also faced problems with LinkCost and all nodes knowing it hence had to sleep 2 seconds before sending acknowledgement.
+
+## Router2 Protocol
+Router2 implements a Link State Routing protocol as discussed in class. It uses Djikstras to maintain a table what nodes to hop to for a particular destination. It uses Link Forwarding since every node decides where to forward it to reach the destination. Main problems faced was concurrency issues. So decided to sleep for 3 seconds before sending READY so that the router knows the topology. Also another problem faced was when Links come back up so decided to sleep for 2 seconds before acknowledging the cost otherwise everything was smooth.
+
+## Testing
+Used all the topologies given to us by the TA's. Also created a python script that generates random topologies with a user specified number of nodes. Most of the small tests worked. There were problems with larger topologies but the sleep statements ended up fixing most of the issues. The python script is called generate_xml_test.py and takes in the number of nodes and output file name as command line parameters.
