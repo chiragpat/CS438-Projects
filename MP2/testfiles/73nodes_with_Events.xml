@@ -613,15 +613,25 @@
     </Link>
   </Topology>
   <Events>
-    <!-- <Link>
+    <Link>
       <node>110</node>
-      <node>81</node>
+      <node>124</node>
       <cost>-1</cost>
-    </Link> -->
+    </Link>
     <Message>
       <src>77</src>
       <dst>113</dst>
       <data>hopefuly i made it</data>
+    </Message>
+    <Link>
+      <node>110</node>
+      <node>81</node>
+      <cost>-1</cost>
+    </Link>
+    <Message>
+      <src>113</src>
+      <dst>77</dst>
+      <data>hopefuly i made it through the right routers</data>
     </Message>
   </Events>
 </Simulation>

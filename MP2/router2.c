@@ -12,6 +12,7 @@ int main(int argc, char *argv[]){
   struct sockaddr_storage their_addr;
   struct timeval tv;
   socklen_t addr_len;
+  pthread_t ready_thread;
   addr_len = sizeof(their_addr);
 
   if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
@@ -53,10 +54,14 @@ int main(int argc, char *argv[]){
 
   // print_graph(nodegraph);
   
-  sendString(sockfd, "READY\n");
+  // sendReady((void *)&sockfd);
+  rv = pthread_create(ready_thread, NULL, sendReady, (void *) &sockfd);
+  if (rv) {  
+    printf("ERROR; pthread_create() return code is %d\n", rv);  
+    exit(1); 
+  }
 
-  sendString(sockfd, "LOG ON\n");
-  receiveAndPrint(sockfd, receiveBuffer, 1);
+  pthread_join(ready_thread, NULL);
 
   FD_ZERO(&fds);
   FD_SET(sockfd, &fds);
@@ -77,8 +82,18 @@ int main(int argc, char *argv[]){
         if (message.controlInt != 0) {
           broadcastOneLinkInfo(nodegraph, message, udpfd);
         }
-        sprintf(sendBuffer, "COST %d OK\n", message.cost);
-        sendString(sockfd, sendBuffer);
+        int params[2];
+        params[0] = sockfd;
+        params[1] = message.cost;
+        rv = pthread_create(ready_thread, NULL, sendCost, (void *) params);
+
+        if (rv) {  
+          printf("ERROR; pthread_create() return code is %d\n", rv);  
+          exit(1); 
+        }
+
+        // sprintf(sendBuffer, "COST %d OK\n", message.cost);
+        // sendString(sockfd, sendBuffer);
         // print_graph(nodegraph);
       }
 
@@ -149,6 +164,7 @@ int main(int argc, char *argv[]){
         if (dest == nodegraph->my_node->node_number) {
           sprintf(sendBuffer, "RECEIVED %s\n", msg);
           sendString(sockfd, sendBuffer);
+          receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
         }
         else {
           Node *hop = get_hop(nodegraph, dest);
@@ -175,7 +191,7 @@ int main(int argc, char *argv[]){
       else {
         LinkMessage message;
         memcpy(&message, receiveBuffer, sizeof(LinkMessage));
-        printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
+        // printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
         Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
 
@@ -227,6 +243,26 @@ int main(int argc, char *argv[]){
   destroy_graph(nodegraph);
   free(nodegraph);
   return 0;
+}
+
+void sendReady(void* sockfd_temp) {
+  sleep(2);
+  char receiveBuffer[MAXDATASIZE];
+  int sockfd = *(int *) sockfd_temp;
+  sendString(sockfd, "READY\n");
+  sendString(sockfd, "LOG ON\n");
+  pthread_exit(NULL);
+}
+
+void sendCost(void* pars) {
+  sleep(2);
+  int * params = (int *) pars;
+  char sendBuffer[MAXDATASIZE];
+  int sockfd = (int) params[0];
+  int cost = (int) params[1];
+  sprintf(sendBuffer, "COST %d OK\n", cost);
+  sendString(sockfd, sendBuffer);
+  pthread_exit(NULL);
 }
 
 void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) {

@@ -32,6 +32,8 @@ typedef struct {
   char message[MAXDATASIZE];
 } Message;
 
+void sendReady(void* sockfd_temp);
+void sendCost(void* params);
 void getAndSetupNeighbours(NodeGraph *nodegraph, int sockfd, FILE* socket_file);
 LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph *nodegraph);
 void broadcastLinkInfo(NodeGraph* graph, int udpfd);
