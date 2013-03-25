@@ -3,7 +3,7 @@
 int main(int argc, char *argv[]){
   int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd, message_length, path_length;
   int src, dest, numbytes, i;
-  char *msg, *host;
+  char *msg, *host, *msg_text;
   FILE* socket_file;
   char path[MAXDATASIZE],sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE], receiveBuffer2[MAXDATASIZE];
   struct sockaddr_storage their_addr;
@@ -86,8 +86,8 @@ int main(int argc, char *argv[]){
         printf("Destination: %d, Message: %s\n", dest, msg);
         /*copies shortest path to destination to path array and returns length of the path*/
         path_length = get_shortest_path(nodegraph, nodegraph->my_node->node_number, dest, path);
-        sprintf(sendBuffer, "LOG FWD %d %s\n", path[0], msg); //logs message to be sent
-        
+        sprintf(sendBuffer, "LOG FWD %d %s\n", path[1], msg); //logs message to be sent
+        path[0] = path[0] - (char)1; 
         sendString(sockfd, sendBuffer);
         receiveAndPrint(sockfd, receiveBuffer2, 1);
 
@@ -96,16 +96,16 @@ int main(int argc, char *argv[]){
         {
           Node * dest_node;
           message_length = strlen(msg);
-          dest_node = get_node(nodegraph, (int32_t)path[0]);//set destination node to the next node
+          dest_node = get_node(nodegraph, (int32_t)path[1]);//set destination node to the next node
 
           sprintf(destPort, "%d", dest_node->node_port);
           sendBuffer[0] = (char) 2;
           sendBuffer[1] = receiveBuffer[1];
           sendBuffer[2] = receiveBuffer[2];
-          for(i = 0; i<path_length; i++)
+          for(i = 0; i<path_length+1; i++)
             sendBuffer[i+3] = path[i];
-          sprintf((char*)(sendBuffer+path_length+3), "%s",msg);
-          message_length = 3 + path_length + message_length;
+          sprintf((char*)(sendBuffer+path_length+1+3), "%s",msg);
+          message_length = 3 + path_length+1 + message_length;
           sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, message_length);
         } 
       }
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
         /*message's final destination*/
         if(receiveBuffer[2] == nodegraph->my_node->node_number)
         {
-          // msg = (char*)(msg + 1);
+          msg = (char*)(msg + 2);
           printf("Message: %s\n", msg);
           sprintf(sendBuffer, "RECEIVED %s\n", msg);
           sendString(sockfd, sendBuffer);
@@ -123,11 +123,14 @@ int main(int argc, char *argv[]){
         {
           
 
-
-          msg=msg+1;
-          message_length = (int32_t)strlen(msg);
-          
-          sprintf(sendBuffer, "LOG FWD %d %s\n", msg[0], msg); //logs message to be sent
+          char number = *msg;
+          msg=(char *)(msg+1);
+          msg_text = (char *)(msg+number +1);
+          message_length = (char)strlen(msg);
+          printf("%s\n", msg);
+          printf("%d\n", message_length);
+          printf("%s\n", msg_text);
+          sprintf(sendBuffer, "LOG FWD %d %s\n", (int32_t)msg[1], msg_text); //logs message to be sent
           sendString(sockfd, sendBuffer);
           receiveAndPrint(sockfd, receiveBuffer2, 1);
           sendBuffer[0] = (char) 2;
@@ -139,10 +142,12 @@ int main(int argc, char *argv[]){
           sendBuffer[message_length+3] = '\0';
 
           Node * dest_node;
-          dest_node = get_node(nodegraph, sendBuffer[3]);//set destination node to the next node
+          dest_node = get_node(nodegraph, (int32_t)msg[1]);//set destination node to the next node
           sprintf(destPort, "%d", dest_node->node_port);
-          printf("Destination: %d, Message: %s\n", sendBuffer[3], msg);
+          printf("Destination: %d, Message: %s\n", sendBuffer[3], msg_text);
           sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, message_length + 3);
+          msg[0] = msg[0] - (char)1;
+
         }
       }
       else {
