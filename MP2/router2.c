@@ -58,8 +58,6 @@ int main(int argc, char *argv[]){
     exit(1); 
   }
 
-  pthread_join(ready_thread, NULL);
-
   FD_ZERO(&fds);
   FD_SET(sockfd, &fds);
   FD_SET(udpfd, &fds);
