@@ -123,7 +123,6 @@ int main(int argc, char *argv[]){
         {
           
 
-
           msg=msg+1;
           message_length = (int32_t)strlen(msg);
           
