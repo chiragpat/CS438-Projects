@@ -1,5 +1,26 @@
 #include "router1.h"
 
+
+void sendReady(void* sockfd_temp) {
+  sleep(2);
+  char receiveBuffer[MAXDATASIZE];
+  int sockfd = *(int *) sockfd_temp;
+  sendString(sockfd, "READY\n");
+  sendString(sockfd, "LOG ON\n");
+  pthread_exit(NULL);
+}
+
+void sendCost(void* pars) {
+  sleep(2);
+  int * params = (int *) pars;
+  char sendBuffer[MAXDATASIZE];
+  int sockfd = (int) params[0];
+  int cost = (int) params[1];
+  sprintf(sendBuffer, "COST %d OK\n", cost);
+  sendString(sockfd, sendBuffer);
+  pthread_exit(NULL);
+}
+
 int main(int argc, char *argv[]){
   int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd, message_length, path_length;
   int src, dest, numbytes, i;
@@ -8,11 +29,17 @@ int main(int argc, char *argv[]){
   char path[MAXDATASIZE],sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE], receiveBuffer2[MAXDATASIZE];
   struct sockaddr_storage their_addr;
   struct timeval tv;
+  pthread_t ready_thread;
   socklen_t addr_len;
   addr_len = sizeof(their_addr);
 
   NodeGraph * nodegraph = malloc(sizeof(NodeGraph));
   fd_set fds;
+
+  if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
+    printf("netID: strasbe1\n");
+    exit(0);
+  }
   
   if (argc != 4) {
     fprintf(stderr,"usage: router hostname tcpport udpport\n");
@@ -45,6 +72,11 @@ int main(int argc, char *argv[]){
 
   sendString(sockfd, "LOG ON\n");
   receiveAndPrint(sockfd, receiveBuffer, 1);
+  rv = pthread_create(&ready_thread, NULL, sendReady, (void *) &sockfd);
+  if (rv) {  
+    printf("ERROR; pthread_create() return code is %d\n", rv);  
+    exit(1); 
+  }
 
   FD_ZERO(&fds);
   FD_SET(sockfd, &fds);
@@ -57,15 +89,25 @@ int main(int argc, char *argv[]){
 
   while( (rv=select(maxfd+1, &fds, NULL, NULL, NULL)) >=0 ){
 
+    
     if (FD_ISSET(sockfd, &fds)) {
       receiveOneLineAndPrint(socket_file, receiveBuffer, 1);
 
       if (strncmp(receiveBuffer, "LINKCOST", strlen("LINKCOST")) == 0) {
         LinkMessage message = updateNodeList(receiveBuffer, addr, nodegraph);
-        broadcastOneLinkInfo(nodegraph, message, udpfd);
-        sprintf(sendBuffer, "COST %d OK\n", message.cost);
-        sendString(sockfd, sendBuffer);
-         // print_graph(nodegraph);
+        if (message.controlInt != 0) {
+          broadcastOneLinkInfo(nodegraph, message, udpfd);
+        }
+        int params[2];
+        params[0] = sockfd;
+        params[1] = message.cost;
+
+        rv = pthread_create(&ready_thread, NULL, sendCost, (void *) params);
+        if (rv) {  
+          printf("ERROR; pthread_create() return code is %d\n", rv);  
+          exit(1); 
+        }
+
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -156,8 +198,7 @@ int main(int argc, char *argv[]){
         // printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
         Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
-
-        if (link == NULL || link->cost != message.cost) {
+        if (link == NULL || (link->cost != message.cost && (difftime(message.t, link->t)) > 0)) {
           Node *node0 = get_node(nodegraph, message.node0_number);
           Node *node1 = get_node(nodegraph, message.node1_number);
 
@@ -204,6 +245,8 @@ int main(int argc, char *argv[]){
   free(nodegraph);
   return 0;
 }
+
+
 
 void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) {
   int ret, i, node_number, node_port, cost;
@@ -272,6 +315,8 @@ LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph 
 
   return message;
 }
+
+
 
 void broadcastLinkInfo(NodeGraph* graph, int udpfd) {
   int i, j;
