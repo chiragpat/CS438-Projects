@@ -52,9 +52,6 @@ int main(int argc, char *argv[]){
   getAndSetupNeighbours(nodegraph, sockfd, socket_file);
   broadcastLinkInfo(nodegraph, udpfd);
 
-  // print_graph(nodegraph);
-  
-  // sendReady((void *)&sockfd);
   rv = pthread_create(ready_thread, NULL, sendReady, (void *) &sockfd);
   if (rv) {  
     printf("ERROR; pthread_create() return code is %d\n", rv);  
@@ -85,16 +82,13 @@ int main(int argc, char *argv[]){
         int params[2];
         params[0] = sockfd;
         params[1] = message.cost;
-        rv = pthread_create(ready_thread, NULL, sendCost, (void *) params);
 
+        rv = pthread_create(ready_thread, NULL, sendCost, (void *) params);
         if (rv) {  
           printf("ERROR; pthread_create() return code is %d\n", rv);  
           exit(1); 
         }
 
-        // sprintf(sendBuffer, "COST %d OK\n", message.cost);
-        // sendString(sockfd, sendBuffer);
-        // print_graph(nodegraph);
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -119,14 +113,9 @@ int main(int argc, char *argv[]){
 
         printf("Destination: %d, Message: %s\n", dest, msg);
 
-        
-
         Message message_t;
         message_t.destination_number = dest;
         strcpy(message_t.message, msg);
-
-        // Link *link = get_link(nodegraph, addr, dest);
-        // Node *destinationNode = get_node(nodegraph, dest);
 
         Node *hop = get_hop(nodegraph, dest);
         if (hop == NULL) {
@@ -377,7 +366,6 @@ void broadcastOneLinkInfo(NodeGraph* graph, LinkMessage message, int udpfd) {
 
     if (link->cost != -1) {
       sprintf(destPort, "%d", node->node_port);
-      // sendUDPMessageTo("127.0.0.1", destPort, (char *) &message, sizeof(LinkMessage));
       sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, sizeof(LinkMessage)+1); 
     }
     
