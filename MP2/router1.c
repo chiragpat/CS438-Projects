@@ -164,6 +164,7 @@ int main(int argc, char *argv[]){
         else
         {
           
+
           char number = *msg;
           msg=(char *)(msg+1);
           msg_text = (char *)(msg+number +1);
