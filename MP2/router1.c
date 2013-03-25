@@ -150,6 +150,11 @@ int main(int argc, char *argv[]){
           message_length = 3 + path_length+1 + message_length;
           sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, message_length);
         } 
+        else
+        {
+          sprintf(sendBuffer, "DROP %s\n", msg);
+          sendString(sockfd, sendBuffer);
+        }
       }
       else if (controlInt == 2) {
         msg = receiveBuffer + 3;
@@ -163,11 +168,9 @@ int main(int argc, char *argv[]){
         }
         else
         {
-          
-
           char number = *msg;
           msg=(char *)(msg+1);
-          msg_text = (char *)(msg+number +1);
+          msg_text = (char *)(msg+ number + (char)1);
           message_length = (char)strlen(msg);
           printf("%s\n", msg);
           printf("%d\n", message_length);
