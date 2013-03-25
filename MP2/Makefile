@@ -9,7 +9,7 @@ CC_ARGS=${CC_OPTS} ${CC_LIBS} ${CC_DEFINES} ${CC_INCLUDES}
 .PHONY=clean
 
 #target "all" depends on all others
-all: router router2 test
+all: router router1 router2 test
 
 router: router.c router.h NodeGraph.h NodeGraph.c NetworkUtils.h NetworkUtils.c
 	${CC} ${CC_ARGS} -o router NodeGraph.c NetworkUtils.c router.c
