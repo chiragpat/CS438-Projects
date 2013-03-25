@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
   addr_len = sizeof(their_addr);
 
   if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
-    printf("netid: patel178\n");
+    printf("netID: patel178\n");
     exit(0);
   }
   
