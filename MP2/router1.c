@@ -1,11 +1,11 @@
 #include "router1.h"
 
 int main(int argc, char *argv[]){
-  int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd;
-  int src, dest, numbytes;
+  int sockfd, udpfd, addr, udpport, new_cost, rv, maxfd, message_length, path_length;
+  int src, dest, numbytes, i;
   char *msg, *host;
   FILE* socket_file;
-  char sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE], receiveBuffer2[MAXDATASIZE];
+  char path[MAXDATASIZE],sendBuffer[MAXDATASIZE], receiveBuffer[MAXDATASIZE], destPort[MAXDATASIZE], receiveBuffer2[MAXDATASIZE];
   struct sockaddr_storage their_addr;
   struct timeval tv;
   socklen_t addr_len;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
   getAndSetupNeighbours(nodegraph, sockfd, socket_file);
   broadcastLinkInfo(nodegraph, udpfd);
 
-  print_graph(nodegraph);
+  // print_graph(nodegraph);
   
   sendString(sockfd, "READY\n");
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
         broadcastOneLinkInfo(nodegraph, message, udpfd);
         sprintf(sendBuffer, "COST %d OK\n", message.cost);
         sendString(sockfd, sendBuffer);
-        print_graph(nodegraph);
+         // print_graph(nodegraph);
       }
 
       if (strcmp(receiveBuffer, "END\n") == 0) {
@@ -78,38 +78,77 @@ int main(int argc, char *argv[]){
       receiveUDPMessageAndPrint(udpfd, receiveBuffer, 0);
 
       int controlInt = (int)receiveBuffer[0];
-      if (controlInt == 1) {
-        dest = byteToInt(receiveBuffer+1);
-        msg = receiveBuffer + 3;
-
+      if (controlInt == 1) 
+      {  
+        dest = byteToInt(receiveBuffer+1);//destination node
+        build_hop_table(nodegraph);//runs djikstras algorithm
+        msg = receiveBuffer + 3; //pointer to message to be sent
         printf("Destination: %d, Message: %s\n", dest, msg);
-
-        sprintf(sendBuffer, "LOG FWD %d %s\n", dest, msg);
+        /*copies shortest path to destination to path array and returns length of the path*/
+        path_length = get_shortest_path(nodegraph, nodegraph->my_node->node_number, dest, path);
+        sprintf(sendBuffer, "LOG FWD %d %s\n", path[0], msg); //logs message to be sent
+        
         sendString(sockfd, sendBuffer);
         receiveAndPrint(sockfd, receiveBuffer2, 1);
 
-        Link *link = get_link(nodegraph, addr, dest);
-        Node *destinationNode = get_node(nodegraph, dest);
+        /*if destination can be reached*/
+        if (path_length != 0) 
+        {
+          Node * dest_node;
+          message_length = strlen(msg);
+          dest_node = get_node(nodegraph, (int32_t)path[0]);//set destination node to the next node
 
-        if (destinationNode != NULL && link != NULL && link->cost != -1) {
-          sprintf(destPort, "%d", destinationNode->node_port);
-          memcpy(sendBuffer, receiveBuffer, (size_t) strlen(msg)+3);
+          sprintf(destPort, "%d", dest_node->node_port);
           sendBuffer[0] = (char) 2;
-          strcat(sendBuffer, "\n");
-          sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, strlen(msg)+3);
-        }
+          sendBuffer[1] = receiveBuffer[1];
+          sendBuffer[2] = receiveBuffer[2];
+          for(i = 0; i<path_length; i++)
+            sendBuffer[i+3] = path[i];
+          sprintf((char*)(sendBuffer+path_length+3), "%s",msg);
+          message_length = 3 + path_length + message_length;
+          sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, message_length);
+        } 
       }
       else if (controlInt == 2) {
         msg = receiveBuffer + 3;
+        /*message's final destination*/
+        if(receiveBuffer[2] == nodegraph->my_node->node_number)
+        {
+          // msg = (char*)(msg + 1);
+          printf("Message: %s\n", msg);
+          sprintf(sendBuffer, "RECEIVED %s\n", msg);
+          sendString(sockfd, sendBuffer);
+        }
+        else
+        {
+          
 
-        printf("Message: %s\n", msg);
-        sprintf(sendBuffer, "RECEIVED %s\n", msg);
-        sendString(sockfd, sendBuffer);
+
+          msg=msg+1;
+          message_length = (int32_t)strlen(msg);
+          
+          sprintf(sendBuffer, "LOG FWD %d %s\n", msg[0], msg); //logs message to be sent
+          sendString(sockfd, sendBuffer);
+          receiveAndPrint(sockfd, receiveBuffer2, 1);
+          sendBuffer[0] = (char) 2;
+          sendBuffer[1] = receiveBuffer[1];
+          sendBuffer[2] = receiveBuffer[2];
+          
+          for(i = 0; i<message_length; i++)
+            sendBuffer[i+3] = msg[i];
+          sendBuffer[message_length+3] = '\0';
+
+          Node * dest_node;
+          dest_node = get_node(nodegraph, sendBuffer[3]);//set destination node to the next node
+          sprintf(destPort, "%d", dest_node->node_port);
+          printf("Destination: %d, Message: %s\n", sendBuffer[3], msg);
+          sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, message_length + 3);
+        }
       }
       else {
         LinkMessage message;
         memcpy(&message, receiveBuffer, sizeof(LinkMessage));
-        printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
+        // printf("%d <--> %d : %d\n", message.node0_number, message.node1_number, message.cost);
 
         Link *link = get_link(nodegraph, message.node0_number, message.node1_number);
 
@@ -118,27 +157,27 @@ int main(int argc, char *argv[]){
           Node *node1 = get_node(nodegraph, message.node1_number);
 
           if (node0 == NULL) {
-            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost);
+            add_link_for_new_node(nodegraph, message.node1_number, message.node0_number, message.node0_port, message.cost, &message.t);
           }
           else if (node1 == NULL) {
-            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, &message.t);
           }
           else if (node0 == NULL && node1 == NULL) {
             add_node(nodegraph, message.node0_number, message.node0_port);
-            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost);
+            add_link_for_new_node(nodegraph, message.node0_number, message.node1_number, message.node1_port, message.cost, &message.t);
           }
           else {
             if (link) {
-              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+              edit_link(nodegraph, message.node0_number, message.node1_number, message.cost, &message.t);
             }
             else {
-              add_link(nodegraph, message.node0_number, message.node1_number, message.cost);
+              add_link(nodegraph, message.node0_number, message.node1_number, message.cost, &message.t);
             }
             
           }
 
           broadcastOneLinkInfo(nodegraph, message, udpfd);
-          print_graph(nodegraph);
+          // print_graph(nodegraph);
         }
       }
 
@@ -189,7 +228,7 @@ void getAndSetupNeighbours(NodeGraph* nodegraph, int sockfd, FILE* socket_file) 
         tok = strtok(NULL, " \n");
         i++; 
       }
-      add_link_for_new_node(nodegraph, nodegraph->my_node->node_number, node_number, node_port, cost);
+      add_link_for_new_node(nodegraph, nodegraph->my_node->node_number, node_number, node_port, cost, NULL);
     }
   }
 }
@@ -219,11 +258,12 @@ LinkMessage updateNodeList(char receiveBuffer[MAXDATASIZE], int addr, NodeGraph 
     i++;
   }
 
-  edit_link(nodegraph, first_node_number, second_node_number, new_cost);
+  Link* link = edit_link(nodegraph, first_node_number, second_node_number, new_cost, NULL);
   message.controlInt = 3;
   message.node0_number = first_node_number;
   message.node1_number = second_node_number;
   message.cost = new_cost;
+  message.t = link->t;
 
   return message;
 }
@@ -242,6 +282,7 @@ void broadcastLinkInfo(NodeGraph* graph, int udpfd) {
     message.node1_number = node->node_number;
     message.node1_port = node->node_port;
     message.cost = link->cost;
+    message.t = link->t;
 
     broadcastOneLinkInfo(graph, message, udpfd);
   }

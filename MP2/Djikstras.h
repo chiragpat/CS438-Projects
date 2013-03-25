@@ -12,5 +12,6 @@
 
 void build_hop_table(NodeGraph* graph);
 Node* get_and_remove_min(Node **nodes, int num_nodes);
+int get_shortest_path(NodeGraph *nodegraph, int source, int destination, char * path);
 
 #endif

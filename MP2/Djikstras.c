@@ -107,3 +107,22 @@ Node* get_and_remove_min(Node **nodes, int num_nodes) {
   }
   return min;
 }
+
+int get_shortest_path(NodeGraph *nodegraph, int source, int destination, char * path)
+{
+  int i = 0;
+  int j;
+  Node* curr_node =  get_node(nodegraph, destination);
+  char temp_path[1024];
+  while(curr_node->node_number != source || curr_node->previous != NULL)
+  {
+    temp_path[i] = (char)(curr_node->node_number);
+    curr_node = curr_node->previous;
+
+    i++;
+  }
+  for(j = i-1; j>=0; j--)
+    path[i-j-1] = temp_path[j];
+  path[i] = '\0';
+  return i;
+}
