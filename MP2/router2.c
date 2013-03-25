@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
   addr_len = sizeof(their_addr);
 
   if (argc == 2 && argv[1] != NULL && (strcmp(argv[1], "-netid") == 0)) {
-    printf("netid: patel178\n");
+    printf("netID: patel178\n");
     exit(0);
   }
   
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
   getAndSetupNeighbours(nodegraph, sockfd, socket_file);
   broadcastLinkInfo(nodegraph, udpfd);
 
-  rv = pthread_create(ready_thread, NULL, sendReady, (void *) &sockfd);
+  rv = pthread_create(&ready_thread, NULL, sendReady, (void *) &sockfd);
   if (rv) {  
     printf("ERROR; pthread_create() return code is %d\n", rv);  
     exit(1); 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
         params[0] = sockfd;
         params[1] = message.cost;
 
-        rv = pthread_create(ready_thread, NULL, sendCost, (void *) params);
+        rv = pthread_create(&ready_thread, NULL, sendCost, (void *) params);
         if (rv) {  
           printf("ERROR; pthread_create() return code is %d\n", rv);  
           exit(1); 
