@@ -1,9 +1,10 @@
-GCC=gcc
-COPTS=-g3
+GCC=g++
+COPTS=-g3 -fpermissive
 
 all: mp3_sender mp3_receiver
 
 .PHONY: clean
+FILES=*.o mp3_receiver mp3_sender
 
 receiver: receiver.c  
 	${GCC} ${COPTS} -L. -c -o receiver.o receiver.c
@@ -18,4 +19,4 @@ mp3_receiver: mp3_receiver.c receiver
 	${GCC} ${COPTS} -L. -lmp3channel -lpthread -lm -o mp3_receiver receiver.o mp3_receiver.c
 	
 clean:
-	rm *.o mp3_receiver mp3_sender
+	@-rm ${FILES}
