@@ -9,5 +9,21 @@
 #ifndef MP3COMMON_H_
 #define MP3COMMON_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include "mp3channel.h"
+
+int openUDPListenerSocket(char *port);
+int sendUDPMessageTo(char *host, char *port, char *msg, int bytes);
+void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes);
+void receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
 
 #endif
