@@ -24,6 +24,8 @@
 int openUDPListenerSocket(char *port);
 int sendUDPMessageTo(char *host, char *port, char *msg, int bytes);
 void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes);
-void receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
+int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
+
+static char port_number[5] = "4001";
 
 #endif

@@ -1,5 +1,7 @@
 #include "receiver.h"
 
+char hostname[10] = "127.0.0.1";
+char ack[4] = "ACK";
 int run_receiver(char* portno, char* filename){
 
   /*
@@ -7,19 +9,21 @@ int run_receiver(char* portno, char* filename){
    * or header file will be considered by our autograder.
    */
 
-  int sockfd;
+  int sockfd, num_bytes = 0;
   char receiveBuffer[MAX_PKTSIZE] = "";
   FILE *file;
 
-  file = fopen(filename, "w+");
+  file = fopen(filename, "w");
   sockfd = openUDPListenerSocket(portno);
 
   while(1) {
-    receiveUDPMessageAndPrint(sockfd, receiveBuffer, 1);
-    if (strcmp(receiveBuffer, "DONE\n") != 0) {
+    num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
+    sendUDPMessageTo(hostname, port_number, ack, 3);
+    
+    if(strcmp(receiveBuffer, "DONE") == 0)
       break;
-    }
-    printf("%d\n",fputs(receiveBuffer, file));
+    else
+      fwrite(receiveBuffer,1, num_bytes, file);
   }
   
   fclose(file);

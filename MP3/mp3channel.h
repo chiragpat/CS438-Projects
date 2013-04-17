@@ -5,7 +5,7 @@
 #ifndef MP3CHANNEL_H_
 #define MP3CHANNEL_H_
 
-#define MAX_PKTSIZE 4096
+#define MAX_PKTSIZE 200
 
 
 /*

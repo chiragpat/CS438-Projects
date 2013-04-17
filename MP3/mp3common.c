@@ -109,7 +109,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
  * @param buffer string to send
  */
 void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes){
-  int numbytes = mp3_sendto(sockfd, buffer, bytes, 0, dest->ai_addr, dest->ai_addrlen);
+  int numbytes = sendto(sockfd, buffer, bytes, 0, dest->ai_addr, dest->ai_addrlen);
   if (numbytes == -1) {
     perror("talker: mp3_sendto");
     exit(1);
@@ -122,7 +122,7 @@ void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes)
  * @param  receiveBuffer the array to hold the return string
  * @param  print 
  */
-void receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print){
+int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print){
   int numbytes;
   struct sockaddr_storage their_addr;
   socklen_t addr_len;
@@ -138,4 +138,5 @@ void receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int 
   if (print != 0) {
     printf("Received: %s", receiveBuffer);
   }
+  return numbytes;
 }

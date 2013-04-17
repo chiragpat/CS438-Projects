@@ -1,4 +1,4 @@
-GCC=g++
+GCC=g++-4.4
 COPTS=-g3 -fpermissive
 
 all: mp3_sender mp3_receiver

@@ -168,14 +168,16 @@ int main(int argc, char *argv[]){
         }
         else
         {
-          char number = *msg;
+          uint8_t number = *(uint8_t*)msg+(uint8_t)1;
           msg=(char *)(msg+1);
-          msg_text = (char *)(msg+ number + (char)1);
+          msg_text = (char *)(msg+ number);
           message_length = (char)strlen(msg);
           printf("%s\n", msg);
           printf("%d\n", message_length);
           printf("%s\n", msg_text);
-          sprintf(sendBuffer, "LOG FWD %d %s\n", (int32_t)msg[1], msg_text); //logs message to be sent
+          printf("%d\n", number);
+          printf("%d\n", (int)strlen(msg_text));
+          sprintf(sendBuffer, "LOG FWD %d %s\n", (int32_t)msg[1], (char *)msg_text); //logs message to be sent
           sendString(sockfd, sendBuffer);
           receiveAndPrint(sockfd, receiveBuffer2, 1);
           sendBuffer[0] = (char) 2;
@@ -191,7 +193,7 @@ int main(int argc, char *argv[]){
           sprintf(destPort, "%d", dest_node->node_port);
           printf("Destination: %d, Message: %s\n", sendBuffer[3], msg_text);
           sendUDPMessageTo("127.0.0.1", destPort, sendBuffer, message_length + 3);
-          msg[0] = msg[0] - (char)1;
+          *msg = *msg - 1;
 
         }
       }

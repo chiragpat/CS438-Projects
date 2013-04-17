@@ -122,13 +122,15 @@ int get_shortest_path(NodeGraph *nodegraph, int source, int destination, char * 
 
     i++;
   }
-  path[0] = i;
+  path[0] = 0;
+  path[1] = i;
   
   for(j = i-1; j>=0; j--)
-    path[i-j] = temp_path[j];
+    path[i-j+1] = temp_path[j];
   path[i]= destination;
   
   path[i+1] = '\0';
+
 
   return i;
 }

@@ -1,25 +1,28 @@
 #include "sender.h"
 
-int run_sender(char* hostname, char *portno, char* filename) {
 
-	/*
-	 * Your implementation should be self-contained in this file, no other source
-	 * or header file will be considered by our autograder.
-	 */
+int run_sender(char* hostname, char *portno, char* filename)
+{
   
   FILE *file;
-  char sendBuffer[MAX_PKTSIZE];
+  int bytes_read = 0, sockfd;
+  char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
+  sockfd = openUDPListenerSocket(port_number);
 
   file = fopen(filename, "r");
 
-  while (fgets(sendBuffer, MAX_PKTSIZE, file) != NULL) {
-    sendUDPMessageTo(hostname, portno, sendBuffer, sizeof(sendBuffer));
-    printf("%s", sendBuffer);
+  while ((bytes_read = fread(sendBuffer,1, MAX_PKTSIZE-1, file)) != 0) 
+  {
+    sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read);
+    receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
+   
   }
 
-  strcpy(sendBuffer, "DONE\n");
-  sendUDPMessageTo(hostname, portno, sendBuffer, 5);
+  strcpy(sendBuffer, "DONE");
 
+  sendUDPMessageTo(hostname, portno, sendBuffer, 4);
+
+  close(sockfd);
   fclose(file);
 	return 0;
 }
