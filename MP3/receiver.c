@@ -9,19 +9,30 @@ int run_receiver(char* portno, char* filename){
    * or header file will be considered by our autograder.
    */
 
-  int sockfd, num_bytes = 0;
+  int sockfd, receive_sockfd, num_bytes = 0;
   char receiveBuffer[MAX_PKTSIZE] = "";
   FILE *file;
 
   file = fopen(filename, "w");
   sockfd = openUDPListenerSocket(portno);
 
-  while(1) {
+  num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
+  fwrite(receiveBuffer,1, num_bytes, file);
+
+  while(1) 
+  {
+    receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);  
     num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
-    sendUDPMessageTo(hostname, port_number, ack, 3);
+    close(receive_sockfd);
     
     if(strcmp(receiveBuffer, "DONE") == 0)
+    {
+      /*acknowledging transmission is done*/
+      receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);
+      receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
+      close(receive_sockfd);
       break;
+    }
     else
       fwrite(receiveBuffer,1, num_bytes, file);
   }

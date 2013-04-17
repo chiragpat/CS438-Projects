@@ -94,12 +94,11 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
 
   printf("Sending to %s:%s\n", host, port);
   sendStringUDP(sockfd, p, msg, bytes);
-
   //Clean Up
   freeaddrinfo(servinfo);
-  close(sockfd);
+  // close(sockfd);
 
-  return 0;
+  return sockfd;
 }
 
 /**
@@ -109,7 +108,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
  * @param buffer string to send
  */
 void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes){
-  int numbytes = sendto(sockfd, buffer, bytes, 0, dest->ai_addr, dest->ai_addrlen);
+  int numbytes = mp3_sendto(sockfd, buffer, bytes, 0, dest->ai_addr, dest->ai_addrlen);
   if (numbytes == -1) {
     perror("talker: mp3_sendto");
     exit(1);
