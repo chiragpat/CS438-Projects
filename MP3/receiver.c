@@ -9,15 +9,20 @@ int run_receiver(char* portno, char* filename){
 
   int sockfd;
   char receiveBuffer[MAX_PKTSIZE] = "";
+  FILE *file;
 
-
+  file = fopen(filename, "w+");
   sockfd = openUDPListenerSocket(portno);
 
   while(1) {
     receiveUDPMessageAndPrint(sockfd, receiveBuffer, 1);
+    if (strcmp(receiveBuffer, "DONE\n") != 0) {
+      break;
+    }
+    printf("%d\n",fputs(receiveBuffer, file));
   }
   
-
+  fclose(file);
   close(sockfd);
   return 0;
 }
