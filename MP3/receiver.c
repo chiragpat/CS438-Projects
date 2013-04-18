@@ -25,11 +25,7 @@ int run_receiver(char* portno, char* filename){
     num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
     
     if(strcmp(receiveBuffer, "DONE") == 0)
-    {
-      /*acknowledging transmission is done*/
-      receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);
       break;
-    }
     else
       fwrite(receiveBuffer,1, num_bytes, file);
   }
