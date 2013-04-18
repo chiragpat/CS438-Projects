@@ -15,7 +15,6 @@ int run_sender(char* hostname, char *portno, char* filename)
   {
     receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read);
     receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
-    close(receive_sockfd); //wait for sender before closing sockfd and clearing queue
   }
 
   strcpy(sendBuffer, "DONE");
@@ -25,9 +24,8 @@ int run_sender(char* hostname, char *portno, char* filename)
   receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
   receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, 4);
  
-  sleep(1); //not sure how else to end it without closing the queue immediatly...
-  close(receive_sockfd);
-  close(sockfd);
+  mp3_close(receive_sockfd);
+  mp3_close(sockfd);
   fclose(file);
 	return 0;
 }

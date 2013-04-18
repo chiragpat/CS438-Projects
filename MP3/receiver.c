@@ -23,14 +23,12 @@ int run_receiver(char* portno, char* filename){
   {
     receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);  
     num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
-    close(receive_sockfd);
     
     if(strcmp(receiveBuffer, "DONE") == 0)
     {
       /*acknowledging transmission is done*/
       receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);
       receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
-      close(receive_sockfd);
       break;
     }
     else
@@ -38,7 +36,8 @@ int run_receiver(char* portno, char* filename){
   }
   
   fclose(file);
-  close(sockfd);
+  mp3_close(receive_sockfd);
+  mp3_close(sockfd);
   return 0;
 }
 
