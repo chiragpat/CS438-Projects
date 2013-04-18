@@ -11,6 +11,8 @@ int run_sender(char* hostname, char *portno, char* filename)
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
   sockfd = openUDPListenerSocket(port_number);
 
+
+
   file = fopen(filename, "r");
   fstat(fileno(file), &file_stat);
 
@@ -18,12 +20,12 @@ int run_sender(char* hostname, char *portno, char* filename)
 
   bytes_read = sprintf(sendBuffer, "Size: %d",num_packs);
   receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read, receive_sockfd);
-  receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
+  wait_for_receive(sockfd, receive_Buffer, 100);
 
   while ((bytes_read = fread(sendBuffer,1, MAX_PKTSIZE-1, file)) != 0) 
   {
     sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read, receive_sockfd);
-    receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
+    wait_for_receive(sockfd, receive_Buffer, 100);
   }
 
   
@@ -33,4 +35,29 @@ int run_sender(char* hostname, char *portno, char* filename)
 	return 0;
 }
 
+int wait_for_receive(int sockfd, char* receive_buffer, uint timeout)
+{
+  fd_set select_fd;
+  int rv, ret = 0;
+  struct timeval tv;
+  FD_ZERO(&select_fd);
+  FD_SET(sockfd, &select_fd);
 
+  tv.tv_sec = 0;
+  tv.tv_usec = timeout * 1000;
+
+  while((rv = select(sockfd + 1, &select_fd, NULL, NULL, &tv)))
+  {
+    if(FD_ISSET(sockfd, &select_fd))
+    {
+      receiveUDPMessageAndPrint(sockfd, receive_buffer, 0);
+      ret = 1;
+      break;
+    }
+    
+    FD_ZERO(&select_fd);
+    FD_SET(sockfd, &select_fd);
+  }
+
+  return ret;
+}

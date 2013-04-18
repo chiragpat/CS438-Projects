@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <math.h>
 #include <pthread.h>
+#include <sys/select.h>
+#include <sys/time.h>
 
 int openUDPListenerSocket(char *port);
 int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock);
