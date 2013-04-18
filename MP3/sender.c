@@ -22,7 +22,7 @@ int run_sender(char* hostname, char *portno, char* filename)
   
   /*acknowledging reciever knows transmission is done*/
   receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
-  receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, 4);
+ 
  
   mp3_close(receive_sockfd);
   mp3_close(sockfd);

@@ -28,7 +28,6 @@ int run_receiver(char* portno, char* filename){
     {
       /*acknowledging transmission is done*/
       receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);
-      receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
       break;
     }
     else
