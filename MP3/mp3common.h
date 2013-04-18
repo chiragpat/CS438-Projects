@@ -20,6 +20,11 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include "mp3channel.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <math.h>
+#include <pthread.h>
 
 int openUDPListenerSocket(char *port);
 int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock);

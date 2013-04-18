@@ -9,7 +9,7 @@ int run_receiver(char* portno, char* filename){
    * or header file will be considered by our autograder.
    */
 
-  int sockfd, receive_sockfd = -1, num_bytes = 0;
+  int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = 0;
   char receiveBuffer[MAX_PKTSIZE] = "";
   FILE *file;
 
@@ -17,19 +17,16 @@ int run_receiver(char* portno, char* filename){
   sockfd = openUDPListenerSocket(portno);
 
   num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
-  fwrite(receiveBuffer,1, num_bytes, file);
+  num_packs = atoi(receiveBuffer+5);
+  receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
 
-  while(1) 
+  while(num_packs != 0) 
   {
-    receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
     num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
-    
-    if(strcmp(receiveBuffer, "DONE") == 0)
-      break;
-    else
-      fwrite(receiveBuffer,1, num_bytes, file);
+    sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
+    fwrite(receiveBuffer,1, num_bytes, file);
+    num_packs--;
   }
-  
   fclose(file);
   mp3_close(receive_sockfd);
   mp3_close(sockfd);
