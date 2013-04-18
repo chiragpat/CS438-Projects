@@ -5,7 +5,7 @@ int run_sender(char* hostname, char *portno, char* filename)
 {
   
   FILE *file;
-  int bytes_read, sockfd, receive_sockfd;
+  int bytes_read, sockfd, receive_sockfd = -1;
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
   sockfd = openUDPListenerSocket(port_number);
 
@@ -13,12 +13,12 @@ int run_sender(char* hostname, char *portno, char* filename)
 
   while ((bytes_read = fread(sendBuffer,1, MAX_PKTSIZE-1, file)) != 0) 
   {
-    receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read);
+    receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read, receive_sockfd);
     receiveUDPMessageAndPrint(sockfd, receive_Buffer, 0);
   }
 
   strcpy(sendBuffer, "DONE");
-  receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, 4);
+  receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, 4, receive_sockfd);
   
  
   mp3_close(receive_sockfd);

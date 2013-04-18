@@ -22,7 +22,7 @@
 #include "mp3channel.h"
 
 int openUDPListenerSocket(char *port);
-int sendUDPMessageTo(char *host, char *port, char *msg, int bytes);
+int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock);
 void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes);
 int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
 

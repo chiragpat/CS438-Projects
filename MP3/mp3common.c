@@ -63,7 +63,7 @@ int openUDPListenerSocket(char *port){
  * @param  msg Message String
  * @return 0 on success
  */
-int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
+int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock){
   struct addrinfo hints, *servinfo, *p;
   int sockfd, rv;
 
@@ -78,6 +78,11 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes){
 
   // loop through all the results and make a socket
   for(p = servinfo; p != NULL; p = p->ai_next) {
+    if(sock  >= 0)
+    {
+      sockfd = sock;
+      break;
+    } 
     if ((sockfd = socket(p->ai_family, p->ai_socktype,
         p->ai_protocol)) == -1) {
       perror("talker: socket");

@@ -9,7 +9,7 @@ int run_receiver(char* portno, char* filename){
    * or header file will be considered by our autograder.
    */
 
-  int sockfd, receive_sockfd, num_bytes = 0;
+  int sockfd, receive_sockfd = -1, num_bytes = 0;
   char receiveBuffer[MAX_PKTSIZE] = "";
   FILE *file;
 
@@ -21,7 +21,7 @@ int run_receiver(char* portno, char* filename){
 
   while(1) 
   {
-    receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3);  
+    receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
     num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
     
     if(strcmp(receiveBuffer, "DONE") == 0)
