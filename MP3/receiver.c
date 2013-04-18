@@ -1,7 +1,6 @@
 #include "receiver.h"
 
 char hostname[10] = "127.0.0.1";
-char ack[4] = "ACK";
 int run_receiver(char* portno, char* filename){
 
   /*
@@ -9,8 +8,8 @@ int run_receiver(char* portno, char* filename){
    * or header file will be considered by our autograder.
    */
 
-  int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = 0;
-  char receiveBuffer[MAX_PKTSIZE] = "";
+  int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = 0, num_packs_received = 0;
+  char receiveBuffer[MAX_PKTSIZE] = "", sendBuffer[MAX_PKTSIZE];
   FILE *file;
   packet_t rcv_packet;
   file = fopen(filename, "w");
@@ -18,14 +17,22 @@ int run_receiver(char* portno, char* filename){
 
   num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
   num_packs = atoi(receiveBuffer+5);
-  receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
+  num_bytes = sprintf(sendBuffer, "ACK: %d", num_packs);
 
-  while(num_packs != 0) 
+  receive_sockfd = sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
+
+  while(num_packs_received != num_packs) 
   {
     num_bytes = receiveUDPMessageAndPrint(sockfd, (char*)(&rcv_packet), 0);
-    receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
-    fwrite(rcv_packet.buffer,1, num_bytes - 4, file);
-    num_packs--;
+    if(rcv_packet.pack_number == num_packs_received)
+    {
+      printf("%d\n", num_packs_received);
+      fwrite(rcv_packet.buffer,1, num_bytes - 4, file);
+      num_packs_received++;
+    }
+  
+    num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
+    sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
   }
   fclose(file);
   mp3_close(receive_sockfd);

@@ -97,7 +97,7 @@ int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock){
     return 2;
   }
 
-  printf("Sending to %s:%s\n", host, port);
+  // printf("Sending to %s:%s\n", host, port);
   sendStringUDP(sockfd, p, msg, bytes);
   //Clean Up
   freeaddrinfo(servinfo);

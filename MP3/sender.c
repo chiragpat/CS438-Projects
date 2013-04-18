@@ -1,12 +1,12 @@
 #include "sender.h"
-
+#define time_out 20
 
 int run_sender(char* hostname, char *portno, char* filename)
 {
   
   FILE *file;
 
-  int num_packs, bytes_read, sockfd, receive_sockfd = -1;
+  int num_packs, bytes_read, sockfd, receive_sockfd = -1, rv = 0;
   struct stat file_stat;
   packet_t packet;
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
@@ -26,8 +26,12 @@ int run_sender(char* hostname, char *portno, char* filename)
 
   while ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-4, file)) != 0) 
   {
-    sendUDPMessageTo(hostname, portno, (char*)(&packet), bytes_read + 4, receive_sockfd);
-    wait_for_receive(sockfd, receive_Buffer, 100);
+    while(!rv)
+    {
+      sendUDPMessageTo(hostname, portno, (char*)(&packet), bytes_read + 4, receive_sockfd);
+      rv = wait_for_receive(sockfd, receive_Buffer, time_out);
+    }
+    rv = 0;
     packet.pack_number++;
   }
 
