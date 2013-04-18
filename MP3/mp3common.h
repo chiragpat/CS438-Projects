@@ -35,4 +35,9 @@ int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int p
 
 static char port_number[5] = "4001";
 
+typedef struct packet
+{
+    int pack_number;
+    char buffer[MAX_PKTSIZE - 4];
+} packet_t;
 #endif

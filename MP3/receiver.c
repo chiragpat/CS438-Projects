@@ -12,7 +12,7 @@ int run_receiver(char* portno, char* filename){
   int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = 0;
   char receiveBuffer[MAX_PKTSIZE] = "";
   FILE *file;
-
+  packet_t rcv_packet;
   file = fopen(filename, "w");
   sockfd = openUDPListenerSocket(portno);
 
@@ -22,9 +22,9 @@ int run_receiver(char* portno, char* filename){
 
   while(num_packs != 0) 
   {
-    num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
-    sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
-    fwrite(receiveBuffer,1, num_bytes, file);
+    num_bytes = receiveUDPMessageAndPrint(sockfd, (char*)(&rcv_packet), 0);
+    receive_sockfd = sendUDPMessageTo(hostname, port_number, ack, 3, receive_sockfd);  
+    fwrite(rcv_packet.buffer,1, num_bytes - 4, file);
     num_packs--;
   }
   fclose(file);

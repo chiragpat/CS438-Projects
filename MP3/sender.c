@@ -8,6 +8,7 @@ int run_sender(char* hostname, char *portno, char* filename)
 
   int num_packs, bytes_read, sockfd, receive_sockfd = -1;
   struct stat file_stat;
+  packet_t packet;
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
   sockfd = openUDPListenerSocket(port_number);
 
@@ -16,16 +17,18 @@ int run_sender(char* hostname, char *portno, char* filename)
   file = fopen(filename, "r");
   fstat(fileno(file), &file_stat);
 
-  num_packs = (int)(ceil(((float)file_stat.st_size)/(MAX_PKTSIZE - 1)));
+  num_packs = (int)(ceil(((float)file_stat.st_size)/(MAX_PKTSIZE - 1 - 4)));
 
   bytes_read = sprintf(sendBuffer, "Size: %d",num_packs);
   receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read, receive_sockfd);
   wait_for_receive(sockfd, receive_Buffer, 100);
+  packet.pack_number = 0;
 
-  while ((bytes_read = fread(sendBuffer,1, MAX_PKTSIZE-1, file)) != 0) 
+  while ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-4, file)) != 0) 
   {
-    sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read, receive_sockfd);
+    sendUDPMessageTo(hostname, portno, (char*)(&packet), bytes_read + 4, receive_sockfd);
     wait_for_receive(sockfd, receive_Buffer, 100);
+    packet.pack_number++;
   }
 
   
