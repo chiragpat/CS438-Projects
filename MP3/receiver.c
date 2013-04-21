@@ -9,6 +9,7 @@ int run_receiver(char* portno, char* filename){
    */
 
   int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = 0, num_packs_received = 0;
+  unsigned int old_check_sum1 = 0, old_check_sum2 = 0;
   char receiveBuffer[MAX_PKTSIZE] = "", sendBuffer[MAX_PKTSIZE];
   FILE *file;
   packet_t rcv_packet;
@@ -32,15 +33,21 @@ int run_receiver(char* portno, char* filename){
     }
     else 
     {
-      if(rcv_packet.pack_number == num_packs_received)
+      old_check_sum1 = rcv_packet.check_sum1;
+      old_check_sum2 = rcv_packet.check_sum2;
+      if((old_check_sum2 == old_check_sum1) && (old_check_sum1 == check_sum(&rcv_packet, MAX_PKTSIZE)))
       {
-        printf("%d\n", num_packs_received);
-        fwrite(rcv_packet.buffer,1, num_bytes - 4, file);
-        num_packs_received++;
+        if(rcv_packet.pack_number == num_packs_received)
+        {
+          printf("%d\n", num_packs_received);
+          fwrite(rcv_packet.buffer,1, rcv_packet.size - 16, file);
+          num_packs_received++;
+        }
+        num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
+        sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
       }
-
-      num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
-      sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
+      else 
+        exit(1);
     }
   
     

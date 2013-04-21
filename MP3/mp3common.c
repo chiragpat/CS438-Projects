@@ -144,3 +144,22 @@ int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int p
   }
   return numbytes;
 }
+
+unsigned int check_sum(packet_t *pack, int size)
+{
+  pack->check_sum1 = 0;
+  pack->check_sum2 = 0;
+  char * values = (char*)pack;
+  unsigned int i, sum = 0;
+
+  for(i = size; i< MAX_PKTSIZE; i++)
+    values[i] = 0;
+
+
+  for(i = 0; i< size; i++)
+   sum+= (unsigned int)(values[i]);
+  
+  pack->check_sum1 = sum;
+  pack->check_sum2 = sum;
+  return sum;
+}

@@ -28,16 +28,22 @@
 #include <sys/select.h>
 #include <sys/time.h>
 
+typedef struct packet
+{
+    int pack_number;
+    unsigned int check_sum1;
+    unsigned int check_sum2;
+    int size;
+    char buffer[MAX_PKTSIZE - 12];
+} packet_t;
+
+static char port_number[5] = "4001";
+
 int openUDPListenerSocket(char *port);
 int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock);
 void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes);
 int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
+unsigned int check_sum(packet_t * pack, int size);
 
-static char port_number[5] = "4001";
 
-typedef struct packet
-{
-    int pack_number;
-    char buffer[MAX_PKTSIZE - 4];
-} packet_t;
 #endif

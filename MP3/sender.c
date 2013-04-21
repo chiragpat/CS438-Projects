@@ -17,7 +17,7 @@ int run_sender(char* hostname, char *portno, char* filename)
   file = fopen(filename, "r");
   fstat(fileno(file), &file_stat);
 
-  num_packs = (int)(ceil(((float)file_stat.st_size)/(MAX_PKTSIZE - 1 - 4)));
+  num_packs = (int)(ceil(((float)file_stat.st_size)/(MAX_PKTSIZE - 1 - 16)));
 
   bytes_read = sprintf(sendBuffer, "Size: %d",num_packs);
   while(strcmp(receive_Buffer, sendBuffer))
@@ -27,11 +27,13 @@ int run_sender(char* hostname, char *portno, char* filename)
   }
   packet.pack_number = 0;
 
-  while ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-4, file)) != 0) 
+  while ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-16, file)) != 0) 
   {
     while(!rv)
     {
-      sendUDPMessageTo(hostname, portno, (char*)(&packet), bytes_read + 4, receive_sockfd);
+      packet.size = bytes_read + 16;
+      check_sum(&packet, bytes_read + 16);
+      sendUDPMessageTo(hostname, portno, (char*)(&packet), MAX_PKTSIZE, receive_sockfd);
       if(num_retry <50)
         rv = wait_for_receive(sockfd, receive_Buffer, time_out);  
       else
@@ -45,7 +47,7 @@ int run_sender(char* hostname, char *portno, char* filename)
     packet.pack_number++;
   }
 
-  
+  printf("%d\n", num_packs);
   mp3_close(receive_sockfd);
   mp3_close(sockfd);
   fclose(file);
