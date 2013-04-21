@@ -8,9 +8,13 @@ int run_sender(char* hostname, char *portno, char* filename)
 
   int num_packs, bytes_read, sockfd, receive_sockfd = -1, rv = 0, num_retry = 0;
   struct stat file_stat;
+  struct sockaddr_in sin;
+  socklen_t len = sizeof(sin);
   packet_t packet;
+  handshake_t handshake;
+
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
-  sockfd = openUDPListenerSocket(port_number);
+  sockfd = openUDPListenerSocket(NULL);
 
 
 
@@ -18,15 +22,25 @@ int run_sender(char* hostname, char *portno, char* filename)
   fstat(fileno(file), &file_stat);
 
   num_packs = (int)(ceil(((float)file_stat.st_size)/(MAX_PKTSIZE - 1 - 16)));
-
   bytes_read = sprintf(sendBuffer, "Size: %d",num_packs);
-  while(strcmp(receive_Buffer, sendBuffer))
+  handshake_t handshake1;
+  handshake1.num_packets = 0;
+  strcpy(handshake1.port,"");
+  strcpy(handshake1.hostname,"");
+  handshake.num_packets = num_packs;
+  gethostname(handshake.hostname, 50);
+  getsockname(sockfd, (struct sockaddr*)&sin, &len);
+  sprintf(handshake.port, "%d", ntohs(sin.sin_port));
+
+
+  while(!rv)
   { 
-    receive_sockfd = sendUDPMessageTo(hostname, portno, sendBuffer, bytes_read, receive_sockfd);
-    wait_for_receive(sockfd, receive_Buffer, 100);
+    handshake_check_sum(&handshake);
+    receive_sockfd = sendUDPMessageTo(hostname, portno, (char *)&handshake, sizeof(handshake_t), receive_sockfd);
+    rv = wait_for_receive(sockfd, (char*)&handshake1, time_out);
   }
   packet.pack_number = 0;
-
+  rv = 0;
   while ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-16, file)) != 0) 
   {
     while(!rv)
@@ -47,7 +61,7 @@ int run_sender(char* hostname, char *portno, char* filename)
     packet.pack_number++;
   }
 
-  printf("%d\n", num_packs);
+  printf("Packets to send: %d\n", num_packs);
   mp3_close(receive_sockfd);
   mp3_close(sockfd);
   fclose(file);

@@ -37,13 +37,21 @@ typedef struct packet
     char buffer[MAX_PKTSIZE - 12];
 } packet_t;
 
-static char port_number[5] = "4001";
+typedef struct handshake
+{
+    int num_packets;
+    unsigned int check_sum1;
+    unsigned int check_sum2;
+    char hostname[50];
+    char  port[6];
+} handshake_t;
 
 int openUDPListenerSocket(char *port);
+int setup_addr(struct addrinfo *servinfo, char* port);
 int sendUDPMessageTo(char *host, char *port, char *msg, int bytes, int sock);
 void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes);
 int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
 unsigned int check_sum(packet_t * pack, int size);
-
+unsigned int handshake_check_sum(handshake_t *handshake);
 
 #endif

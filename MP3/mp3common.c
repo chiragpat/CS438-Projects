@@ -13,8 +13,79 @@
  * @return the socketfd the listener is listening on
  */
 int openUDPListenerSocket(char *port){
-  int sockfd;
+  int sockfd, counter = 0;
   struct addrinfo hints, *servinfo, *p;
+  int rv, bind_rv = -1;
+  char sock_number[5] = "4000";
+
+  while (bind_rv == -1 && counter < 1000) {
+    counter ++;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE; // use my IP
+    if(port == NULL)
+    {
+      if ((rv = getaddrinfo(NULL, sock_number, &hints, &servinfo)) != 0) {
+          fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+          return 1;
+      }
+    }
+    else
+    {
+      if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
+          fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+          return 1;
+      }
+    }
+
+    // loop through all the results and bind to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+      if ((sockfd = socket(p->ai_family, p->ai_socktype,
+          p->ai_protocol)) == -1) {
+        perror("listener: socket");
+        continue;
+      }
+      
+      if ((bind_rv=bind(sockfd, p->ai_addr, p->ai_addrlen)) == -1) {
+        close(sockfd);
+        printf("bind failed retrying\n");
+        int temp = atoi(sock_number)+1;
+        freeaddrinfo(servinfo);
+        sprintf(sock_number,"%d", temp);
+        break;
+      }
+
+      break;
+    }    
+  }
+  
+  if (p == NULL || counter == 1000) {
+    fprintf(stderr, "listener: failed to bind socket\n");
+    return 2;
+  }
+
+  freeaddrinfo(servinfo);
+
+  struct sockaddr_in sin;
+  socklen_t len = sizeof(sin);
+
+  if (getsockname(sockfd, (struct sockaddr*)&sin, &len) == -1)
+  {
+    perror("getsockname");
+  }
+  else
+  {
+    printf("listener: waiting to recvfrom...%d\n", ntohs(sin.sin_port));
+  }
+  
+
+  return sockfd;
+}
+
+int setup_addr(struct addrinfo *servinfo, char* port)
+{
+  struct addrinfo hints;
   int rv;
 
   memset(&hints, 0, sizeof hints);
@@ -23,37 +94,10 @@ int openUDPListenerSocket(char *port){
   hints.ai_flags = AI_PASSIVE; // use my IP
 
   if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
-    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-    return 1;
+      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+      return 1;
   }
-
-  // loop through all the results and bind to the first we can
-  for(p = servinfo; p != NULL; p = p->ai_next) {
-    if ((sockfd = socket(p->ai_family, p->ai_socktype,
-        p->ai_protocol)) == -1) {
-      perror("listener: socket");
-      continue;
-    }
-
-    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-      close(sockfd);
-      perror("listener: bind");
-      continue;
-    }
-
-    break;
-  }
-
-  if (p == NULL) {
-    fprintf(stderr, "listener: failed to bind socket\n");
-    return 2;
-  }
-
-  freeaddrinfo(servinfo);
-
-  printf("listener: waiting to recvfrom...%s\n", port);
-
-  return sockfd;
+  return 0;
 }
 
 /**
@@ -161,5 +205,35 @@ unsigned int check_sum(packet_t *pack, int size)
   
   pack->check_sum1 = sum;
   pack->check_sum2 = sum;
+  return sum;
+}
+
+
+unsigned int handshake_check_sum(handshake_t *handshake)
+{
+  handshake->check_sum1 = 0;
+  handshake->check_sum2 = 0;
+  char * values = (char*)handshake;
+  unsigned int i, sum = 0;
+  int host_length, port_length;
+
+  host_length = strlen(handshake->hostname);
+  port_length = strlen(handshake->port);
+
+  for(i = host_length; i<50; i++)
+  {
+    handshake->hostname[i] = '\0';
+  }
+
+  for(i = port_length; i<6; i++)
+  {
+    handshake->port[i] = '\0';
+  }
+
+  for(i = 0; i< sizeof(handshake_t); i++)
+   sum+= (unsigned int)(values[i]);
+  
+  handshake->check_sum1 = sum;
+  handshake->check_sum2 = sum;
   return sum;
 }
