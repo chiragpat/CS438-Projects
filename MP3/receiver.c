@@ -46,8 +46,6 @@ int run_receiver(char* portno, char* filename){
         num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
         sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
       }
-      else 
-        exit(1);
     }
   
     
