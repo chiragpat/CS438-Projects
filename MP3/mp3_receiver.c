@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	 *	DO NOT use this function anywhere else in your code, or your score will be 0
 	 */
 	mp3_init();
-	setMP3Params(1000, 0, 10, 0.2, 0.0);
+	setMP3Params(1, 1, 2000, 0.1, 0.0);
 
 	// Run start the client
 	run_receiver(argv[1], argv[2]);

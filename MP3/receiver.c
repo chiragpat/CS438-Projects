@@ -17,22 +17,33 @@ int run_receiver(char* portno, char* filename){
 
   num_bytes = receiveUDPMessageAndPrint(sockfd, receiveBuffer, 0);
   num_packs = atoi(receiveBuffer+5);
-  num_bytes = sprintf(sendBuffer, "ACK: %d", num_packs);
+  num_bytes = sprintf(sendBuffer, "Size: %d", num_packs);
 
   receive_sockfd = sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
 
+  printf("Number Packets: %d\n", num_packs);
   while(num_packs_received != num_packs) 
   {
     num_bytes = receiveUDPMessageAndPrint(sockfd, (char*)(&rcv_packet), 0);
-    if(rcv_packet.pack_number == num_packs_received)
+    if(strncmp((char*)(&rcv_packet), "Size: ", 6) == 0)
     {
-      printf("%d\n", num_packs_received);
-      fwrite(rcv_packet.buffer,1, num_bytes - 4, file);
-      num_packs_received++;
+      num_bytes = sprintf(sendBuffer, "Size: %d", num_packs);
+      sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);
+    }
+    else 
+    {
+      if(rcv_packet.pack_number == num_packs_received)
+      {
+        printf("%d\n", num_packs_received);
+        fwrite(rcv_packet.buffer,1, num_bytes - 4, file);
+        num_packs_received++;
+      }
+
+      num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
+      sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
     }
   
-    num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
-    sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
+    
   }
   fclose(file);
   mp3_close(receive_sockfd);
