@@ -36,7 +36,7 @@ int run_receiver(char* portno, char* filename){
         strcpy(port_number, handshake->port);
         num_packs = handshake->num_packets;
         receive_sockfd = sendUDPMessageTo(hostname, port_number, (char *)handshake, num_bytes, receive_sockfd);
-        printf("Number Packets: %d\n", num_packs);
+        // printf("Number Packets: %d\n", num_packs);
       }
     }
     else 
@@ -47,7 +47,7 @@ int run_receiver(char* portno, char* filename){
       {
         if(rcv_packet.pack_number == expected_packet_number)
         {
-          printf("Packet Number Received: %d\n", expected_packet_number);
+          // printf("Packet Number Received: %d\n", expected_packet_number);
           fwrite(rcv_packet.buffer,1, rcv_packet.size - 16, file);
           expected_packet_number++;
         }

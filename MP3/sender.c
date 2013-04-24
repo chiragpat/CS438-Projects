@@ -1,8 +1,9 @@
 #include "sender.h"
-#define WINDOW_SIZE 10
+// #define WINDOW_SIZE 10
 
 static int last_ack_pack;
 static int num_retry ;
+static int window_size = 10;
 int run_sender(char* hostname, char *portno, char* filename)
 {
   
@@ -15,10 +16,9 @@ int run_sender(char* hostname, char *portno, char* filename)
   socklen_t len = sizeof(sin);
   packet_t packet;
   handshake_t handshake;
-  struct timeval time_out, start, finish;
+  struct timeval time_out, start, finish, send_finish, window;
   time_out.tv_sec = 1;
   time_out.tv_usec = 0;
-
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
   sockfd = openUDPListenerSocket(NULL);
 
@@ -42,12 +42,22 @@ int run_sender(char* hostname, char *portno, char* filename)
     handshake_check_sum(&handshake);
     gettimeofday(&start, NULL);
     receive_sockfd = sendUDPMessageTo(hostname, portno, (char *)&handshake, sizeof(handshake_t), receive_sockfd);
+    gettimeofday(&send_finish, NULL);
     rv = wait_for_receive(sockfd, (char*)&handshake1, time_out, 1);
     gettimeofday(&finish, NULL);
   }
   
-  time_out.tv_sec = (unsigned long)(1.25*(finish.tv_sec - start.tv_sec));
-  time_out.tv_usec = (unsigned long)(1.25*(finish.tv_usec - start.tv_usec));
+  window.tv_usec = (unsigned long)(send_finish.tv_usec - start.tv_usec);
+
+  time_out.tv_sec = (unsigned long)(finish.tv_sec - start.tv_sec);
+  time_out.tv_usec = (unsigned long)(finish.tv_usec - start.tv_usec);
+
+
+  
+
+  window_size = (int)(time_out.tv_usec/window.tv_usec) % 1000;
+  window_size = window_size / 2 + 1;
+  printf("Window Size: %d\n", window_size);
   packet.pack_number = 0;
   rv = 0;
   last_ack_pack = -1;
@@ -55,7 +65,7 @@ int run_sender(char* hostname, char *portno, char* filename)
   {
     packet.pack_number = last_ack_pack+1;
     fseek(file, packet.pack_number*((MAX_PKTSIZE-1)-16), SEEK_SET);
-    for(i=0; i < WINDOW_SIZE && ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-16, file)) != 0); i++)
+    for(i=0; i < window_size && ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-16, file)) != 0); i++)
     {
       packet.size = bytes_read + 16;
       check_sum(&packet, bytes_read + 16);
@@ -63,12 +73,12 @@ int run_sender(char* hostname, char *portno, char* filename)
       packet.pack_number++;
     }
 
-    if(num_retry < 2 * WINDOW_SIZE)
+    if(num_retry < 20 * window_size)
         rv = wait_for_receive(sockfd, receive_Buffer, time_out, 0);  
     else
       break;
     
-    if(last_ack_pack >= num_packs - WINDOW_SIZE - 1)
+    if(last_ack_pack >= num_packs - window_size - 1)
     {
       num_retry++;        
     }
@@ -76,7 +86,7 @@ int run_sender(char* hostname, char *portno, char* filename)
     rv = 0;
   }
 
-  printf("Packets to send: %d\n", num_packs);
+  // printf("Packets to send: %d\n", num_packs);
   mp3_close(receive_sockfd);
   mp3_close(sockfd);
   fclose(file);
@@ -103,7 +113,7 @@ int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int ha
         {
           last_ack_pack++;
           num_retry = 0;
-          printf("ACK: %d\n", ((ack_t *)receive_buffer)->pack_number);
+          // printf("ACK: %d\n", ((ack_t *)receive_buffer)->pack_number);
         }
       ret = 1;
       if(handshake == 1)
@@ -111,7 +121,7 @@ int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int ha
       else
       {
         num_ack++;
-        if(num_ack == WINDOW_SIZE)
+        if(num_ack == window_size)
           break;
       }
     }
