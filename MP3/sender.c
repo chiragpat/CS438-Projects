@@ -68,7 +68,7 @@ int run_sender(char* hostname, char *portno, char* filename)
     else
       break;
     
-    if(packet.pack_number >= num_packs - WINDOW_SIZE - 1)
+    if(last_ack_pack >= num_packs - WINDOW_SIZE - 1)
     {
       num_retry++;        
     }
