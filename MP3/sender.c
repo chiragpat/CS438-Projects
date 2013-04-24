@@ -1,5 +1,4 @@
 #include "sender.h"
-#define time_out 20
 
 int run_sender(char* hostname, char *portno, char* filename)
 {
@@ -12,11 +11,12 @@ int run_sender(char* hostname, char *portno, char* filename)
   socklen_t len = sizeof(sin);
   packet_t packet;
   handshake_t handshake;
+  struct timeval time_out, start, finish;
+  time_out.tv_sec = 2;
+  time_out.tv_usec = 0;
 
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
   sockfd = openUDPListenerSocket(NULL);
-
-
 
   file = fopen(filename, "r");
   fstat(fileno(file), &file_stat);
@@ -36,9 +36,14 @@ int run_sender(char* hostname, char *portno, char* filename)
   while(!rv)
   { 
     handshake_check_sum(&handshake);
+    gettimeofday(&start, NULL);
     receive_sockfd = sendUDPMessageTo(hostname, portno, (char *)&handshake, sizeof(handshake_t), receive_sockfd);
     rv = wait_for_receive(sockfd, (char*)&handshake1, time_out);
+    gettimeofday(&finish, NULL);
   }
+  
+  time_out.tv_sec = 2*(finish.tv_sec - start.tv_sec);
+  time_out.tv_usec = 2*(finish.tv_usec - start.tv_usec);
   packet.pack_number = 0;
   rv = 0;
   while ((bytes_read = fread(packet.buffer,1, (MAX_PKTSIZE-1)-16, file)) != 0) 
@@ -68,18 +73,14 @@ int run_sender(char* hostname, char *portno, char* filename)
 	return 0;
 }
 
-int wait_for_receive(int sockfd, char* receive_buffer, uint timeout)
+int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv)
 {
   fd_set select_fd;
   int rv, ret = 0;
-  struct timeval tv;
   FD_ZERO(&select_fd);
   FD_SET(sockfd, &select_fd);
 
-  tv.tv_sec = 0;
-  tv.tv_usec = timeout * 1000;
-
-  while((rv = select(sockfd + 1, &select_fd, NULL, NULL, &tv)))
+   while((rv = select(sockfd + 1, &select_fd, NULL, NULL, &tv)))
   {
     if(FD_ISSET(sockfd, &select_fd))
     {
