@@ -53,11 +53,10 @@ int run_sender(char* hostname, char *portno, char* filename)
   time_out.tv_usec = (unsigned long)(finish.tv_usec - start.tv_usec);
 
 
-  
 
-  window_size = (int)(time_out.tv_usec/window.tv_usec) % 1000;
-  window_size = window_size / 2 + 1;
-  printf("Window Size: %d\n", window_size);
+
+  window_size = (int)((unsigned int)(time_out.tv_usec/(2*window.tv_usec)) % 1000 + 1);
+  // printf("Window Size: %d\n", (int) (window_size));
   packet.pack_number = 0;
   rv = 0;
   last_ack_pack = -1;
@@ -73,7 +72,7 @@ int run_sender(char* hostname, char *portno, char* filename)
       packet.pack_number++;
     }
 
-    if(num_retry < 20 * window_size)
+    if(num_retry < 100* window_size)
         rv = wait_for_receive(sockfd, receive_Buffer, time_out, 0);  
     else
       break;
