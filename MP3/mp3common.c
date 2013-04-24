@@ -237,3 +237,20 @@ unsigned int handshake_check_sum(handshake_t *handshake)
   handshake->check_sum2 = sum;
   return sum;
 }
+
+
+unsigned int ack_check_sum(ack_t * ack)
+{
+  ack->check_sum1 = 0;
+  ack->check_sum2 = 0;
+  char * values = (char*)ack;
+  unsigned int i, sum = 0;
+
+
+  for(i = 0; i< sizeof(ack_t); i++)
+   sum+= (unsigned int)(values[i]);
+  
+  ack->check_sum1 = sum;
+  ack->check_sum2 = sum;
+  return sum;
+}

@@ -37,6 +37,13 @@ typedef struct packet
     char buffer[MAX_PKTSIZE - 12];
 } packet_t;
 
+typedef struct ack
+{
+    int pack_number;
+    unsigned int check_sum1;
+    unsigned int check_sum2;
+} ack_t;
+
 typedef struct handshake
 {
     int num_packets;
@@ -53,5 +60,7 @@ void sendStringUDP(int sockfd, struct addrinfo * dest, char * buffer, int bytes)
 int receiveUDPMessageAndPrint(int sockfd, char receiveBuffer[MAX_PKTSIZE], int print);
 unsigned int check_sum(packet_t * pack, int size);
 unsigned int handshake_check_sum(handshake_t *handshake);
+unsigned int ack_check_sum(ack_t * ack);
+
 
 #endif

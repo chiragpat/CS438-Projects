@@ -8,7 +8,7 @@ int run_receiver(char* portno, char* filename){
    * or header file will be considered by our autograder.
    */
 
-  int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = -1, num_packs_received = 0;
+  int sockfd, receive_sockfd = -1, num_bytes = 0, num_packs = -1, expected_packet_number = 0;
   unsigned int old_check_sum1 = 0, old_check_sum2 = 0;
   char receiveBuffer[MAX_PKTSIZE] = "", sendBuffer[MAX_PKTSIZE];
   char hostname[MAX_PKTSIZE] = "";
@@ -18,9 +18,9 @@ int run_receiver(char* portno, char* filename){
   packet_t rcv_packet;
   file = fopen(filename, "w");
   sockfd = openUDPListenerSocket(portno);
+  ack_t ack;
 
-
-  while(num_packs_received != num_packs) 
+  while(expected_packet_number != num_packs) 
   {
     num_bytes = receiveUDPMessageAndPrint(sockfd, (char*)(&rcv_packet), 0);
     if(sizeof(handshake_t) == num_bytes)
@@ -45,14 +45,15 @@ int run_receiver(char* portno, char* filename){
       old_check_sum2 = rcv_packet.check_sum2;
       if((old_check_sum2 == old_check_sum1) && (old_check_sum1 == check_sum(&rcv_packet, MAX_PKTSIZE)))
       {
-        if(rcv_packet.pack_number == num_packs_received)
+        if(rcv_packet.pack_number == expected_packet_number)
         {
-          printf("Packet Number Received: %d\n", num_packs_received);
+          printf("Packet Number Received: %d\n", expected_packet_number);
           fwrite(rcv_packet.buffer,1, rcv_packet.size - 16, file);
-          num_packs_received++;
+          expected_packet_number++;
         }
-        num_bytes = sprintf(sendBuffer, "ACK: %d", rcv_packet.pack_number);
-        sendUDPMessageTo(hostname, port_number, sendBuffer, num_bytes, receive_sockfd);  
+        ack.pack_number = rcv_packet.pack_number;
+        ack_check_sum(&ack);
+        sendUDPMessageTo(hostname, port_number, (char *)&ack, sizeof(ack_t), receive_sockfd);  
       }
     }
   
@@ -64,4 +65,4 @@ int run_receiver(char* portno, char* filename){
   mp3_close(sockfd);
   return 0;
 }
-unsigned int handshake_check_sum(handshake_t *handshake);
+
