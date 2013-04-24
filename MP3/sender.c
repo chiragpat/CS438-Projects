@@ -1,5 +1,5 @@
 #include "sender.h"
-#define WINDOW_SIZE 50
+#define WINDOW_SIZE 10
 
 static int last_ack_pack;
 static int num_retry ;
