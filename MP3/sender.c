@@ -72,7 +72,7 @@ int run_sender(char* hostname, char *portno, char* filename)
       packet.pack_number++;
     }
 
-    if(num_retry < 100* window_size)
+    if(num_retry < 10 * window_size || num_retry < 100)
         rv = wait_for_receive(sockfd, receive_Buffer, time_out, 0);  
     else
       break;
