@@ -42,7 +42,6 @@ int run_sender(char* hostname, char *portno, char* filename)
     handshake_check_sum(&handshake);
     gettimeofday(&start, NULL);
     receive_sockfd = sendUDPMessageTo(hostname, portno, (char *)&handshake, sizeof(handshake_t), receive_sockfd);
-    gettimeofday(&send_finish, NULL);
     rv = wait_for_receive(sockfd, (char*)&handshake1, time_out, 1);
     gettimeofday(&finish, NULL);
   }
