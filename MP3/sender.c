@@ -1,5 +1,5 @@
 #include "sender.h"
-#define WINDOW_SIZE 50
+#define WINDOW_SIZE 10
 
 static int last_ack_pack;
 static int num_retry ;
@@ -16,7 +16,7 @@ int run_sender(char* hostname, char *portno, char* filename)
   packet_t packet;
   handshake_t handshake;
   struct timeval time_out, start, finish;
-  time_out.tv_sec = 1;
+  time_out.tv_sec = 2;
   time_out.tv_usec = 0;
 
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
@@ -46,8 +46,9 @@ int run_sender(char* hostname, char *portno, char* filename)
     gettimeofday(&finish, NULL);
   }
   
-  time_out.tv_sec = (unsigned long)(1.25*(finish.tv_sec - start.tv_sec));
-  time_out.tv_usec = (unsigned long)(1.25*(finish.tv_usec - start.tv_usec));
+  // time_out.tv_sec = (unsigned long)(1.25*(finish.tv_sec - start.tv_sec));
+  // time_out.tv_usec = (unsigned long)(1.25*(finish.tv_usec - start.tv_usec));
+
   packet.pack_number = 0;
   rv = 0;
   last_ack_pack = -1;
@@ -103,16 +104,22 @@ int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int ha
         {
           last_ack_pack++;
           num_retry = 0;
-          printf("ACK: %d\n", ((ack_t *)receive_buffer)->pack_number);
+          // printf("ACK: %d\n", ((ack_t *)receive_buffer)->pack_number);
+          num_ack++;
+          printf("%d: %d\n", num_ack, WINDOW_SIZE);
         }
       ret = 1;
       if(handshake == 1)
         break;
       else
-      {
-        num_ack++;
+      { 
+        printf("Here before\n");
         if(num_ack == WINDOW_SIZE)
+        {
+          printf("Here\n");
           break;
+        }
+          
       }
     }
     
