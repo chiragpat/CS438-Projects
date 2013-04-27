@@ -4,13 +4,14 @@
 static int last_ack_pack;
 static int num_retry ;
 static int window_size = 10;
+static int num_packs = 0;
 int run_sender(char* hostname, char *portno, char* filename)
 {
   
   FILE *file;
   num_retry = 0;
   int i;
-  int num_packs, bytes_read, sockfd, receive_sockfd = -1, rv = 0;
+  int bytes_read, sockfd, receive_sockfd = -1, rv = 0;
   struct stat file_stat;
   struct sockaddr_in sin;
   socklen_t len = sizeof(sin);
@@ -105,6 +106,7 @@ int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int ha
           num_retry = 0;
           // printf("ACK: %d\n", ((ack_t *)receive_buffer)->pack_number);
           num_ack++;
+          printf("%d:%d\n", last_ack_pack, num_packs);
           printf("%d: %d\n", num_ack, WINDOW_SIZE);
         }
       ret = 1;
@@ -113,7 +115,7 @@ int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int ha
       else
       { 
         printf("Here before\n");
-        if(num_ack == WINDOW_SIZE)
+        if(num_ack == WINDOW_SIZE || last_ack_pack == num_packs-1)
         {
           printf("Here\n");
           break;
