@@ -7,6 +7,6 @@
 
 
 int run_sender(char* hostname, char* port, char* filename);
-int wait_for_receive(int sockfd, char* receive_buffer, struct timeval timeout, int handshake);
+int wait_for_receive(int sockfd, char* receive_buffer, int handshake);
 
 #endif

@@ -1,9 +1,10 @@
 #include "sender.h"
-#define WINDOW_SIZE 10
 
+
+static struct timeval time_out;
 static int last_ack_pack;
 static int num_retry ;
-static int window_size = 10;
+static int window_size = 759;
 static int num_packs = 0;
 int run_sender(char* hostname, char *portno, char* filename)
 {
@@ -17,9 +18,7 @@ int run_sender(char* hostname, char *portno, char* filename)
   socklen_t len = sizeof(sin);
   packet_t packet;
   handshake_t handshake;
-  struct timeval time_out, start, finish;
-  time_out.tv_sec = 2;
-  time_out.tv_usec = 0;
+  struct timeval start, finish;
   char sendBuffer[MAX_PKTSIZE], receive_Buffer[MAX_PKTSIZE];
   sockfd = openUDPListenerSocket(NULL);
 
@@ -37,13 +36,14 @@ int run_sender(char* hostname, char *portno, char* filename)
   getsockname(sockfd, (struct sockaddr*)&sin, &len);
   sprintf(handshake.port, "%d", ntohs(sin.sin_port));
 
-
+  time_out.tv_sec = 2;
+  time_out.tv_usec = 0;
   while(!rv)
   { 
     handshake_check_sum(&handshake);
     gettimeofday(&start, NULL);
     receive_sockfd = sendUDPMessageTo(hostname, portno, (char *)&handshake, sizeof(handshake_t), receive_sockfd);
-    rv = wait_for_receive(sockfd, (char*)&handshake1, time_out, 1);
+    rv = wait_for_receive(sockfd, (char*)&handshake1, 1);
     gettimeofday(&finish, NULL);
   }
   
@@ -65,7 +65,7 @@ int run_sender(char* hostname, char *portno, char* filename)
     }
 
     if(num_retry < 10 * window_size || num_retry < 100)
-        rv = wait_for_receive(sockfd, receive_Buffer, time_out, 0);  
+        rv = wait_for_receive(sockfd, receive_Buffer, 0);  
     else
       break;
     
@@ -84,15 +84,17 @@ int run_sender(char* hostname, char *portno, char* filename)
 	return 0;
 }
 
-int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int handshake)
+int wait_for_receive(int sockfd, char* receive_buffer,  int handshake)
 {
+  time_out.tv_sec = 2;
+  time_out.tv_usec = 0;
   fd_set select_fd;
   int rv, ret = 0;
   FD_ZERO(&select_fd);
   FD_SET(sockfd, &select_fd);
   int num_ack = 0;
   int bytes_received;
-   while((rv = select(sockfd + 1, &select_fd, NULL, NULL, &tv)))
+   while((rv = select(sockfd + 1, &select_fd, NULL, NULL, &time_out)))
   {
     if(FD_ISSET(sockfd, &select_fd))
     {
@@ -106,18 +108,14 @@ int wait_for_receive(int sockfd, char* receive_buffer, struct timeval tv, int ha
           num_retry = 0;
           // printf("ACK: %d\n", ((ack_t *)receive_buffer)->pack_number);
           num_ack++;
-          printf("%d:%d\n", last_ack_pack, num_packs);
-          printf("%d: %d\n", num_ack, WINDOW_SIZE);
         }
       ret = 1;
       if(handshake == 1)
         break;
       else
       { 
-        printf("Here before\n");
-        if(num_ack == WINDOW_SIZE || last_ack_pack == num_packs-1)
+        if(num_ack == window_size || last_ack_pack == num_packs-1)
         {
-          printf("Here\n");
           break;
         }
           
